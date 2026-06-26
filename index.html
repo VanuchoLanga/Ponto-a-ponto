@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>PONTO A PONTO LOGÍSTICA | Soluções Globais</title>
+    <!-- Google Fonts & Font Awesome 6 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1e293b;
+            line-height: 1.5;
+            scroll-behavior: smooth;
+        }
+
+        /* CSS Variables (Premium Palette) */
+        :root {
+            --primary: #FF7A18;
+            --primary-dark: #e56204;
+            --secondary: #0B2D4D;
+            --dark-bg: #061826;
+            --light: #ffffff;
+            --gray-light: #f8fafc;
+            --gray-border: #e2e8f0;
+            --shadow-sm: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            --shadow-md: 0 20px 25px -12px rgba(0, 0, 0, 0.08);
+            --transition: all 0.25s ease;
+        }
+
+        /* Sticky Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid var(--gray-border);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, var(--primary) 0%, #FF9A44 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .logo span {
+            color: var(--secondary);
+            background: none;
+            background-clip: unset;
+            -webkit-background-clip: unset;
+            font-weight: 700;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            font-weight: 500;
+            color: #1e2a3a;
+            transition: var(--transition);
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .btn-outline-nav {
+            border: 1.5px solid var(--primary);
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            background: transparent;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .btn-outline-nav:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* hamburger */
+        .hamburger {
+            display: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: var(--secondary);
+        }
+
+        /* container padrão */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 5rem 0;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(107deg, rgba(6,24,38,0.85) 0%, rgba(11,45,77,0.8) 100%), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center 30%;
+            color: white;
+            border-radius: 0 0 2rem 2rem;
+            margin-top: 0;
+        }
+        .hero-content {
+            max-width: 700px;
+            padding: 3rem 0 4rem;
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.9rem 2rem;
+            border-radius: 48px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 0.9rem 2rem;
+            border-radius: 48px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .btn-secondary:hover {
+            background: white;
+            color: var(--secondary);
+            border-color: white;
+        }
+
+        /* section titles */
+        .section-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 2.5rem;
+            text-align: center;
+            color: var(--secondary);
+        }
+        .section-sub {
+            text-align: center;
+            color: #4a5b6e;
+            max-width: 680px;
+            margin: -1rem auto 3rem;
+        }
+
+        /* service cards */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .service-card {
+            background: var(--light);
+            border-radius: 1.5rem;
+            padding: 1.8rem;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+            border: 1px solid var(--gray-border);
+            text-align: center;
+        }
+        .service-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+        .service-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            background: rgba(255, 122, 24, 0.12);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 1.2rem;
+        }
+        .service-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.7rem;
+        }
+        .service-card p {
+            color: #475569;
+        }
+
+        /* steps */
+        .steps-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .step-item {
+            flex: 1;
+            min-width: 170px;
+            background: var(--gray-light);
+            border-radius: 2rem;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+            transition: var(--transition);
+        }
+        .step-number {
+            background: var(--primary);
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 60px;
+            color: white;
+            font-weight: 800;
+            font-size: 1.3rem;
+            margin: 0 auto 1rem;
+        }
+        .step-item h4 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        /* tracking card */
+        .tracking-card {
+            background: var(--gray-light);
+            border-radius: 2rem;
+            padding: 2rem;
+            max-width: 750px;
+            margin: 0 auto;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-border);
+        }
+        .tracking-input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .tracking-input-group input {
+            flex: 2;
+            padding: 1rem 1.2rem;
+            border-radius: 60px;
+            border: 1px solid #cbd5e1;
+            font-size: 1rem;
+            font-family: monospace;
+            letter-spacing: 0.5px;
+        }
+        .tracking-input-group button {
+            background: var(--primary);
+            border: none;
+            padding: 0 2rem;
+            border-radius: 60px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tracking-result {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        .status-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #e9eef3;
+        }
+        .status-icon {
+            width: 32px;
+            text-align: center;
+            font-size: 1.3rem;
+        }
+        .status-text {
+            font-weight: 500;
+            flex: 1;
+        }
+        .completed { color: #10b981; }
+        .current { color: var(--primary); }
+        .pending { color: #94a3b8; }
+
+        /* stats */
+        .stats-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 2rem;
+            text-align: center;
+            background: var(--secondary);
+            padding: 3rem 2rem;
+            border-radius: 3rem;
+            color: white;
+        }
+        .stat-item h3 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .stat-item p {
+            font-weight: 500;
+        }
+
+        /* footer */
+        footer {
+            background: var(--dark-bg);
+            color: #cbd5e1;
+            padding: 3rem 0 2rem;
+        }
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        .footer-col h4 {
+            color: white;
+            margin-bottom: 1rem;
+        }
+        .social-links a {
+            color: #cbd5e1;
+            margin-right: 1rem;
+            font-size: 1.4rem;
+            transition: 0.2s;
+        }
+        .social-links a:hover { color: var(--primary); }
+        .footer-bottom {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid #1e2f3a;
+        }
+
+        /* modal login */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            max-width: 420px;
+            width: 90%;
+            border-radius: 2rem;
+            padding: 2rem;
+            position: relative;
+            animation: fadeUp 0.2s ease;
+        }
+        .close-modal {
+            position: absolute;
+            right: 1.3rem;
+            top: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #5b6e8c;
+        }
+        .modal-content h3 {
+            font-size: 1.7rem;
+            margin-bottom: 1rem;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 0.9rem;
+            margin: 0.8rem 0;
+            border-radius: 1rem;
+            border: 1px solid #cbd5e1;
+        }
+        .modal-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 2rem;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* responsive */
+        @media (max-width: 880px) {
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                background: white;
+                position: absolute;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                padding: 1.5rem;
+                box-shadow: 0 20px 25px -12px rgba(0,0,0,0.1);
+                border-bottom: 1px solid #e2e8f0;
+                gap: 1.2rem;
+                z-index: 999;
+            }
+            .nav-links.active {
+                display: flex;
+            }
+            .hamburger {
+                display: block;
+            }
+            .hero h1 {
+                font-size: 2.3rem;
+            }
+            .section-title {
+                font-size: 1.8rem;
+            }
+        }
+        @media (max-width: 640px) {
+            .container {
+                padding: 0 1.2rem;
+            }
+            .steps-container {
+                flex-direction: column;
+            }
+            .btn-group {
+                flex-direction: column;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header class="header">
+    <div class="navbar">
+        <div class="logo">PONTO A PONTO <span>LOGÍSTICA</span></div>
+        <div class="hamburger" id="hamburgerIcon">
+            <i class="fas fa-bars"></i>
+        </div>
+        <div class="nav-links" id="navLinks">
+            <a href="#home">Início</a>
+            <a href="#services">Nossos Serviços</a>
+            <a href="#how-it-works">Como Funciona</a>
+            <a href="#tracking-section">Rastrear Pedido</a>
+            <a href="#contact-footer">Contactos</a>
+            <a href="#" id="loginMenuBtn" class="btn-outline-nav"><i class="fas fa-user-lock"></i> Entrar no Sistema</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container hero-content">
+            <h1>PONTO A PONTO LOGÍSTICA</h1>
+            <p>Do primeiro ao último ponto, estamos consigo.</p>
+            <div class="btn-group">
+                <button class="btn-primary" id="heroTrackBtn"><i class="fas fa-map-marker-alt"></i> Rastrear Pedido</button>
+                <button class="btn-secondary" id="heroLoginBtn"><i class="fas fa-sign-in-alt"></i> Entrar no Sistema</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services">
+        <div class="container">
+            <h2 class="section-title">Nossos Serviços</h2>
+            <div class="services-grid">
+                <div class="service-card"><div class="service-icon"><i class="fas fa-shopping-cart"></i></div><h3>Compras na China</h3><p>Ajudamos na aquisição de produtos em plataformas internacionais.</p></div>
+                <div class="service-card"><div class="service-icon"><i class="fas fa-plane"></i></div><h3>Transporte Aéreo</h3><p>Entrega rápida para mercadorias urgentes.</p></div>
+                <div class="service-card"><div class="service-icon"><i class="fas fa-ship"></i></div><h3>Transporte Marítimo</h3><p>Solução económica para grandes volumes.</p></div>
+                <div class="service-card"><div class="service-icon"><i class="fas fa-warehouse"></i></div><h3>Armazém na China</h3><p>Recebemos, consolidamos e organizamos os seus produtos.</p></div>
+                <div class="service-card"><div class="service-icon"><i class="fas fa-chart-line"></i></div><h3>Rastreamento em Tempo Real</h3><p>Acompanhe o estado do seu pedido 24 horas por dia.</p></div>
+                <div class="service-card"><div class="service-icon"><i class="fas fa-truck"></i></div><h3>Entrega em Moçambique</h3><p>Receba a sua encomenda com segurança.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how-it-works" style="background: #fefcf8;">
+        <div class="container">
+            <h2 class="section-title">Como Funciona</h2>
+            <div class="steps-container">
+                <div class="step-item"><div class="step-number">1</div><h4>📦 Faz o pedido</h4><p>Seleccione produtos e formalize a compra</p></div>
+                <div class="step-item"><div class="step-number">2</div><h4>🇨🇳 Compramos na China</h4><p>Adquirimos por si nos melhores marketplaces</p></div>
+                <div class="step-item"><div class="step-number">3</div><h4>🏢 Recebemos no armazém</h4><p>Consolidação e controlo de qualidade</p></div>
+                <div class="step-item"><div class="step-number">4</div><h4>✈️🚢 Enviamos para Moçambique</h4><p>Logística internacional dedicada</p></div>
+                <div class="step-item"><div class="step-number">5</div><h4>🏠 Entrega ao cliente</h4><p>Última milha com total segurança</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tracking Section -->
+    <section id="tracking-section">
+        <div class="container">
+            <h2 class="section-title">Rastreio Rápido</h2>
+            <div class="tracking-card">
+                <div class="tracking-input-group">
+                    <input type="text" id="trackingCode" placeholder="Ex: PED-2026-00001" value="PED-2026-00001">
+                    <button id="trackBtn"><i class="fas fa-search"></i> RASTREAR</button>
+                </div>
+                <div id="trackingResultArea" class="tracking-result">
+                    <!-- dynamic result render via js -->
+                </div>
+                <p style="font-size:0.8rem; margin-top:0.8rem;"><i class="fas fa-info-circle"></i> Códigos exemplo: PED-2026-00001, PED-2026-00002, PED-2026-00003</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics -->
+    <section>
+        <div class="container stats-grid">
+            <div class="stat-item"><h3>+500</h3><p>Pedidos Entregues</p></div>
+            <div class="stat-item"><h3>+300</h3><p>Clientes Satisfeitos</p></div>
+            <div class="stat-item"><h3>24/7</h3><p>Suporte</p></div>
+            <div class="stat-item"><h3>100%</h3><p>Rastreamento</p></div>
+        </div>
+    </section>
+</main>
+
+<footer id="contact-footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-col">
+                <h4>PONTO A PONTO</h4>
+                <p><i class="fas fa-map-marker-alt"></i> Av. Marginal, Maputo - Moçambique</p>
+                <p><i class="fas fa-envelope"></i> info@pontoapontolog.co.mz</p>
+                <p><i class="fas fa-phone-alt"></i> +258 84 123 4567</p>
+            </div>
+            <div class="footer-col">
+                <h4>Atendimento</h4>
+                <p><i class="fab fa-whatsapp"></i> WhatsApp: +258 85 987 6543</p>
+                <p><i class="far fa-clock"></i> Seg–Sex: 8h – 18h</p>
+            </div>
+            <div class="footer-col">
+                <h4>Redes Sociais</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+                <p style="margin-top:1rem;">Termos e Condições | Política de Privacidade</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 PONTO A PONTO LOGÍSTICA — Do primeiro ao último ponto, estamos consigo.</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" id="closeModalBtn">&times;</span>
+        <h3><i class="fas fa-key"></i> Acesso ao Sistema</h3>
+        <p style="margin-bottom: 0.5rem;">Cliente ou Administração</p>
+        <input type="text" class="modal-input" id="loginUser" placeholder="Utilizador / Email">
+        <input type="password" class="modal-input" id="loginPass" placeholder="Senha">
+        <button class="modal-btn" id="doLoginBtn"><i class="fas fa-arrow-right-to-bracket"></i> Entrar</button>
+        <p style="margin-top: 1rem; font-size: 0.8rem; text-align:center;">Demo: cliente@exemplo.com / qualquer senha</p>
+    </div>
+</div>
+
+<script>
+    // ----- TRACKING DATABASE (Simulação de status) -----
+    const trackingDB = {
+        "PED-2026-00001": {
+            steps: ["Comprado na China", "Recebido na Agência", "Em Trânsito", "Chegou a Moçambique", "Entregue"],
+            currentStep: 2   // índice 2 = Em Trânsito (ativo)
+        },
+        "PED-2026-00002": {
+            steps: ["Comprado na China", "Recebido na Agência", "Em Trânsito", "Chegou a Moçambique", "Entregue"],
+            currentStep: 4   // Entregue
+        },
+        "PED-2026-00003": {
+            steps: ["Comprado na China", "Recebido na Agência", "Em Trânsito", "Chegou a Moçambique", "Entregue"],
+            currentStep: 0   // apenas comprado
+        }
+    };
+
+    function renderTrackingStatus(trackingCode) {
+        const resultDiv = document.getElementById("trackingResultArea");
+        const data = trackingDB[trackingCode];
+        if (!data) {
+            resultDiv.innerHTML = `<div style="text-align:center; padding:2rem;"><i class="fas fa-circle-exclamation" style="font-size:2rem; color:#FF7A18;"></i><p style="margin-top:1rem;"><strong>Código não encontrado</strong><br>Verifique o número do pedido. Exemplos: PED-2026-00001, PED-2026-00002</p></div>`;
+            return;
+        }
+        const { steps, currentStep } = data;
+        let html = `<div><strong><i class="fas fa-box"></i> Pedido: ${trackingCode}</strong><div style="margin-top: 1rem;">`;
+        steps.forEach((step, idx) => {
+            let statusClass = "pending";
+            let iconHtml = '<i class="far fa-circle"></i>';
+            if (idx < currentStep) {
+                statusClass = "completed";
+                iconHtml = '<i class="fas fa-check-circle"></i>';
+            } else if (idx === currentStep) {
+                statusClass = "current";
+                iconHtml = '<i class="fas fa-hourglass-half"></i>';
+            }
+            html += `<div class="status-step">
+                        <div class="status-icon ${statusClass}">${iconHtml}</div>
+                        <div class="status-text ${statusClass}">${step}</div>
+                    </div>`;
+        });
+        html += `</div><div style="margin-top:0.8rem; font-size:0.8rem; background:#F1F5F9; border-radius:1rem; padding:0.6rem; text-align:center;">📅 Atualização: ${new Date().toLocaleDateString()}</div></div>`;
+        resultDiv.innerHTML = html;
+    }
+
+    // Função de rastreamento principal
+    function handleTracking() {
+        let code = document.getElementById("trackingCode").value.trim().toUpperCase();
+        if (code === "") {
+            document.getElementById("trackingResultArea").innerHTML = `<div style="padding:1rem; text-align:center;">⚠️ Insira um código de pedido válido.</div>`;
+            return;
+        }
+        renderTrackingStatus(code);
+    }
+
+    // Modal Login
+    const modal = document.getElementById("loginModal");
+    function openLoginModal() {
+        modal.style.display = "flex";
+    }
+    function closeModal() {
+        modal.style.display = "none";
+    }
+    document.getElementById("loginMenuBtn").addEventListener("click", (e) => {
+        e.preventDefault();
+        openLoginModal();
+    });
+    document.getElementById("heroLoginBtn").addEventListener("click", () => {
+        openLoginModal();
+    });
+    document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+    window.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.getElementById("doLoginBtn").addEventListener("click", () => {
+        const user = document.getElementById("loginUser").value.trim();
+        if (!user) {
+            alert("Por favor, insira o utilizador (demo: cliente@exemplo.com)");
+            return;
+        }
+        alert(`Olá ${user}, acesso simulado.\nÁrea de cliente / administração em desenvolvimento.\nBem-vindo à PONTO A PONTO LOGÍSTICA.`);
+        closeModal();
+        document.getElementById("loginUser").value = "";
+        document.getElementById("loginPass").value = "";
+    });
+
+    // Scrolls & navegação
+    document.getElementById("heroTrackBtn").addEventListener("click", () => {
+        document.getElementById("tracking-section").scrollIntoView({ behavior: "smooth" });
+    });
+    document.querySelectorAll("#navLinks a").forEach(anchor => {
+        anchor.addEventListener("click", function(e) {
+            const href = this.getAttribute("href");
+            if (href && href !== "#" && href.startsWith("#")) {
+                e.preventDefault();
+                const targetId = href.substring(1);
+                const targetElem = document.getElementById(targetId);
+                if (targetElem) targetElem.scrollIntoView({ behavior: "smooth" });
+                else if (targetId === "contact-footer") document.querySelector("footer").scrollIntoView({ behavior: "smooth" });
+                else if (targetId === "home") window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+            // Fechar menu mobile após clique
+            const navDiv = document.getElementById("navLinks");
+            if (navDiv.classList.contains("active")) navDiv.classList.remove("active");
+        });
+    });
+    // rastrear button
+    document.getElementById("trackBtn").addEventListener("click", handleTracking);
+    document.getElementById("trackingCode").addEventListener("keypress", (e) => { if(e.key === "Enter") handleTracking(); });
+
+    // hamburguer menu toggle
+    const hamburger = document.getElementById("hamburgerIcon");
+    const navLinks = document.getElementById("navLinks");
+    hamburger.addEventListener("click", () => {
+        navLinks.classList.toggle("active");
+    });
+
+    // default load tracking example on page load
+    window.addEventListener("DOMContentLoaded", () => {
+        renderTrackingStatus("PED-2026-00001");
+        // Ajuste para evitar conflito se houver hash
+        if (window.location.hash) {
+            const id = window.location.hash.substring(1);
+            const element = document.getElementById(id);
+            if (element) setTimeout(() => element.scrollIntoView({ behavior: "smooth" }), 100);
+        }
+    });
+</script>
+</body>
+</html>

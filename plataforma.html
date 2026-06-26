@@ -1,0 +1,1913 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <title>Ponto a Ponto Logística — Plataforma</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+  </script>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- localforage (IndexedDB) -->
+  <script src="https://cdn.jsdelivr.net/npm/localforage/dist/localforage.min.js"></script>
+  <style>
+    :root{
+      --brand-navy:#0B2D4D;--brand-navy-dark:#061826;--brand-orange:#FF7A18;
+      --brand-orange-light:#FF9A3D;--brand-sky:#2b6cff;--text:#eaf1ff;
+      --muted:#c5d0e0;--line:rgba(255,255,255,.12);
+      --bg:linear-gradient(180deg,#04080f 0%,#0B2D4D 40%,#061826 100%);
+      --success:#21c55d;--warning:#f59e0b;--danger:#ef4444;--wa:#25D366;
+      --font-sans:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      --radius-sm:8px;--radius:12px;--radius-lg:20px;--radius-xl:24px;
+      --shadow-card:0 10px 40px rgba(0,0,0,.4);
+      --space-xs:4px;--space-sm:8px;--space-md:16px;--space-lg:24px;--space-xl:32px;
+      --sidebar-width: 250px;
+      --sidebar-collapsed: 70px;
+    }
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:4px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5;overflow-x:hidden}
+
+    /* ===== MENU LATERAL ===== */
+    .sidebar{
+      position:fixed;
+      left:0;
+      top:0;
+      width:var(--sidebar-width);
+      height:100vh;
+      background:linear-gradient(180deg,#031526,#061d34);
+      border-right:1px solid rgba(255,122,24,.25);
+      padding-top:70px;
+      transition:width .3s ease;
+      z-index:999;
+      overflow-y:auto;
+      overflow-x:hidden;
+    }
+    .sidebar.collapsed{
+      width:var(--sidebar-collapsed);
+    }
+    .menu-toggle{
+      position:fixed;
+      top:15px;
+      left:15px;
+      z-index:1000;
+      border:none;
+      background:var(--brand-orange);
+      color:white;
+      font-size:22px;
+      width:45px;
+      height:45px;
+      border-radius:8px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:background .2s;
+      box-shadow:0 4px 12px rgba(0,0,0,.3);
+    }
+    .menu-toggle:hover{
+      background:var(--brand-orange-light);
+    }
+    .sidebar nav{
+      display:flex;
+      flex-direction:column;
+      padding:0 10px;
+    }
+    .sidebar .tab{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:6px;
+      border-radius:8px;
+      padding:12px 14px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      background:rgba(255,255,255,.04);
+      color:#dbeafe;
+      border:1px solid rgba(255,122,24,.15);
+      transition:.25s;
+      position:relative;
+    }
+    .sidebar .tab i{
+      font-size:20px;
+      min-width:20px;
+      text-align:center;
+      color:#ff7a18;
+      transition:color .25s;
+    }
+    .sidebar .tab:hover{
+      background:rgba(255,122,24,.15);
+      border-color:#ff7a18;
+      color:#fff;
+    }
+    .sidebar .tab.active{
+      background:linear-gradient(135deg,#ff7a18,#ff9d4d);
+      color:#fff;
+      border-color:#ff7a18;
+      box-shadow:0 0 15px rgba(255,122,24,.35);
+    }
+    .sidebar .tab.active i{
+      color:#fff;
+    }
+    .sidebar.collapsed .tab{
+      justify-content:center;
+      padding:12px 0;
+    }
+    .sidebar.collapsed .tab span{
+      display:none;
+    }
+    .sidebar .badge{
+      position:absolute;
+      top:2px;
+      right:8px;
+    }
+    .sidebar.collapsed .badge{
+      right:2px;
+      top:-2px;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .main-content{
+      margin-left:var(--sidebar-width);
+      transition:margin-left .3s ease;
+    }
+    .sidebar.collapsed ~ .main-content{
+      margin-left:var(--sidebar-collapsed);
+    }
+
+    header{position:sticky;top:0;z-index:10;background:rgba(6,24,38,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+    header:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--brand-orange),var(--brand-sky),var(--brand-orange))}
+    .wrap{max-width:1200px;margin:0 auto;padding:var(--space-md)}
+    .top{display:flex;gap:var(--space-md);align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:14px}
+    .logoBox{width:52px;height:52px;border-radius:var(--radius);background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,255,255,.9));border:2px solid var(--brand-orange);display:grid;place-items:center;overflow:hidden}
+    .logoBox img{width:100%;height:100%;object-fit:contain;padding:4px}
+    .brand h1{font-size:17px;margin:0;color:#fff}.brand p{margin:6px 0 0;color:var(--brand-orange);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:var(--space-md)}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{border:1px solid var(--line);background:linear-gradient(180deg,rgba(11,45,77,.8),rgba(6,24,38,.6));border-radius:var(--radius-lg);padding:var(--space-lg);box-shadow:var(--shadow-card);position:relative;overflow:hidden;transition:box-shadow .2s}
+    .card:before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,122,24,.4),transparent)}
+    .card:hover{box-shadow:0 12px 48px rgba(0,0,0,.5)}
+    h2{margin:0 0 12px;font-size:18px;font-weight:600;color:#fff;display:flex;align-items:center;gap:var(--space-sm);letter-spacing:.3px}
+    h2:before{content:"";display:inline-block;width:4px;height:20px;background:linear-gradient(180deg,var(--brand-orange),var(--brand-sky));border-radius:2px}
+    label{display:block;font-size:12px;color:var(--muted);margin:var(--space-md) 0 6px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+    input,select,textarea{width:100%;padding:12px 14px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.25);color:var(--text);outline:none;transition:border .2s,box-shadow .2s;font-family:inherit}
+    input:focus,select:focus,textarea:focus{border-color:var(--brand-orange);box-shadow:0 0 0 3px rgba(255,122,24,.15)}
+    textarea{min-height:80px;resize:vertical}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md)}
+    .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-md)}
+    @media(max-width:640px){.row,.row3{grid-template-columns:1fr}}
+    .btn{border:none;border-radius:var(--radius-sm);padding:12px 20px;background:var(--brand-sky);color:white;cursor:pointer;font-weight:600;font-size:14px;transition:transform .1s,box-shadow .2s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+    .btn i{margin-right:4px;font-size:14px}
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.1)}.btn:active{transform:translateY(0)}
+    .btn.secondary{background:rgba(255,255,255,.08);border:1px solid var(--line)}.btn.secondary:hover{border-color:var(--brand-orange)}
+    .btn.danger{background:linear-gradient(135deg,#dc2626,#b91c1c)}.btn.orange{background:linear-gradient(135deg,var(--brand-orange),var(--brand-orange-light));color:#fff}
+    .btn.wa{background:var(--wa);color:#fff}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
+    .muted{color:var(--muted);font-size:12px;line-height:1.4}
+    .note{padding:14px;border-radius:var(--radius);background:rgba(255,122,24,.08);border:1px solid rgba(255,122,24,.2);font-size:13px;line-height:1.5}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+    th{color:var(--brand-orange);font-weight:600;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+    tr:hover td{background:rgba(255,255,255,.03)}
+    .pill{display:inline-block;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid transparent}
+    .pill.ok{background:rgba(33,197,93,.15);border-color:rgba(33,197,93,.4);color:#4ade80}
+    .pill.warn{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.4);color:#fbbf24}
+    .pill.bad{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.4);color:#f87171}
+    .pill.info{background:rgba(43,108,255,.12);border-color:rgba(43,108,255,.4);color:#60a5fa}
+    .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--space-md);margin-bottom:var(--space-sm)}
+    .kpi .box{border:1px solid var(--line);border-radius:var(--radius);padding:var(--space-md);background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.2));position:relative;transition:transform .2s}
+    .kpi .box:hover{transform:translateY(-2px)}
+    .kpi .box:after{content:"";position:absolute;top:0;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,var(--brand-orange),transparent);border-radius:2px}
+    .kpi .v{font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;line-height:1.2}.kpi .t{font-size:12px;color:var(--muted)}
+    .flex{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .right{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+    .hidden{display:none!important}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);margin:var(--space-lg) 0}
+    .table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px}
+    .imgPrev{max-width:100%;border-radius:var(--radius-sm);border:1px solid var(--line);margin-top:var(--space-sm)}
+    .itemCard{border:1px solid rgba(255,122,24,.2);border-radius:var(--radius);padding:var(--space-md);background:rgba(0,0,0,.2);margin-bottom:var(--space-md)}
+    .itemGrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md)}
+    @media(max-width:980px){.itemGrid{grid-template-columns:1fr}}
+    #toasts{position:fixed;right:16px;bottom:16px;display:grid;gap:10px;z-index:999}
+    .toast{padding:14px 18px;border-radius:var(--radius);border:1px solid rgba(255,255,255,.2);background:rgba(11,45,77,.95);backdrop-filter:blur(10px);box-shadow:0 10px 30px rgba(0,0,0,.4);color:#fff;font-size:13px;animation:slideIn .3s ease;max-width:320px}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;place-items:center;padding:20px;z-index:99;backdrop-filter:blur(8px);animation:fadeIn .2s}
+    @keyframes fadeIn{from{opacity:0}}
+    .modal .paper{width:min(900px,100%);background:#fff;color:#1a1a1a;border-radius:var(--radius-xl);padding:var(--space-xl);box-shadow:0 25px 80px rgba(0,0,0,.5);max-height:calc(100vh - 60px);overflow:auto}
+    .modal .paper h3{color:var(--brand-navy);margin:0 0 8px;font-size:22px}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;color:var(--muted)}
+    .empty-state .icon{font-size:48px;margin-bottom:16px;opacity:.6}.empty-state .message{font-size:14px;max-width:300px}
+    .backup-bar{background:rgba(0,0,0,.3);border-radius:var(--radius-sm);padding:6px 14px;font-size:11px;display:flex;align-items:center;gap:var(--space-sm)}
+    .backup-bar .dot{width:8px;height:8px;border-radius:50%;background:var(--success)}.backup-bar .dot.error{background:var(--danger)}
+    :focus-visible{outline:2px solid var(--brand-orange);outline-offset:2px}
+
+    /* ===== LOGIN TABS ===== */
+    .login-tabs{display:flex;gap:0;margin-bottom:24px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line)}
+    .login-tab{flex:1;padding:14px;text-align:center;cursor:pointer;font-weight:600;font-size:13px;background:rgba(255,255,255,.05);transition:all .2s;border:none;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:8px}
+    .login-tab i{font-size:16px;color:var(--brand-orange)}
+    .login-tab.active{background:linear-gradient(135deg,rgba(255,122,24,.2),rgba(43,108,255,.15));color:#fff;box-shadow:inset 0 -3px 0 var(--brand-orange)}
+    .login-tab:hover{background:rgba(255,122,24,.1)}
+    .login-pane{display:none}.login-pane.active{display:block}
+
+    /* ===== REMEMBER ME CHECKBOX ===== */
+    .remember-me{display:flex;align-items:center;gap:8px;margin-top:12px;color:var(--muted);font-size:13px}
+    .remember-me input[type="checkbox"]{width:auto;accent-color:var(--brand-orange)}
+
+    /* ===== ROLE BADGE ===== */
+    .role-badge{display:inline-block;padding:3px 10px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .role-admin{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#f87171}
+    .role-financeiro{background:rgba(33,197,93,.15);border:1px solid rgba(33,197,93,.4);color:#4ade80}
+    .role-operador{background:rgba(43,108,255,.15);border:1px solid rgba(43,108,255,.4);color:#60a5fa}
+    .role-armazem{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#fbbf24}
+    .role-entregador{background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.4);color:#c084fc}
+
+    /* ===== TIMELINE ===== */
+    .timeline{position:relative;padding:20px 0;margin:20px 0}
+    .timeline-item{display:flex;gap:16px;position:relative;padding-bottom:28px}
+    .timeline-item:last-child{padding-bottom:0}
+    .timeline-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;z-index:1;transition:all .3s}
+    .timeline-dot.done{background:var(--success);color:#fff;box-shadow:0 0 12px rgba(33,197,93,.4)}
+    .timeline-dot.current{background:var(--brand-orange);color:#fff;box-shadow:0 0 16px rgba(255,122,24,.5);animation:pulse 2s infinite}
+    .timeline-dot.pending{background:rgba(255,255,255,.1);color:var(--muted);border:2px dashed rgba(255,255,255,.2)}
+    @keyframes pulse{0%,100%{box-shadow:0 0 8px rgba(255,122,24,.4)}50%{box-shadow:0 0 20px rgba(255,122,24,.7)}}
+    .timeline-line{position:absolute;left:15px;top:32px;width:2px;height:calc(100% - 32px);z-index:0}
+    .timeline-line.done{background:var(--success)}.timeline-line.pending{background:rgba(255,255,255,.1);border-left:2px dashed rgba(255,255,255,.15);width:0}
+    .timeline-content{flex:1;padding-top:4px}
+    .timeline-content .title{font-weight:600;color:#fff;font-size:14px;margin-bottom:2px}
+    .timeline-content .date{font-size:11px;color:var(--muted)}
+
+    /* ===== CLIENT PORTAL ===== */
+    .client-welcome{text-align:center;padding:32px 20px;background:linear-gradient(135deg,rgba(255,122,24,.1),rgba(43,108,255,.1));border-radius:var(--radius-lg);border:1px solid rgba(255,122,24,.3);margin-bottom:24px}
+    .client-welcome h2:before{display:none}.client-welcome h2{justify-content:center}
+    .order-card{border:1px solid var(--line);border-radius:var(--radius);padding:20px;background:rgba(0,0,0,.2);margin-bottom:16px;cursor:pointer;transition:all .2s}
+    .order-card:hover{border-color:var(--brand-orange);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+
+    /* ===== PUBLIC TRACKING ===== */
+    .track-search{max-width:600px;margin:0 auto;text-align:center}
+    .track-input-wrap{display:flex;gap:8px;margin-top:16px}
+    .track-input-wrap input{font-size:18px;letter-spacing:2px;text-transform:uppercase;text-align:center}
+
+    /* ===== WHATSAPP NOTIFICATION MODAL ===== */
+    .wa-preview{background:#e5ddd5;border-radius:var(--radius);padding:20px;margin:16px 0;font-family:inherit}
+    .wa-bubble{background:#dcf8c6;color:#303030;padding:12px 16px;border-radius:8px 8px 0 8px;max-width:85%;margin-left:auto;font-size:14px;line-height:1.6;white-space:pre-line;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+
+    /* ===== TRACKING MANUAL ===== */
+    .track-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;flex-shrink:0}
+    .track-dot.done{background:#16a34a;color:#fff}
+    .track-dot.pending{background:#d1d5db;color:#666}
+    .track-row{display:flex;gap:12px;margin-bottom:15px;align-items:flex-start}
+    .track-row .info{flex:1}
+    .track-row .info strong{color:#fff}
+    .track-row .info small{color:var(--muted);font-size:12px}
+
+    /* ===== ARMAZÉM STATS ===== */
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:20px}
+    .stat-card{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:20px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+    .stat-card h3{font-size:28px;margin:0;color:var(--brand-orange)}
+    .stat-card span{color:var(--muted);font-size:13px}
+
+    /* ===== ICONS ===== */
+    .menu-icon{width:20px;text-align:center;margin-right:8px}
+    .btn i{font-size:14px}
+    .fa-solid{color:inherit}
+    .empty-state .icon i{font-size:48px;color:var(--muted);opacity:.6}
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:768px){
+      .sidebar{
+        width:var(--sidebar-collapsed);
+      }
+      .sidebar:not(.collapsed){
+        width:var(--sidebar-width);
+        box-shadow:0 0 20px rgba(0,0,0,.5);
+      }
+      .main-content{
+        margin-left:var(--sidebar-collapsed);
+      }
+      .sidebar:not(.collapsed) ~ .main-content{
+        margin-left:var(--sidebar-width);
+      }
+    }
+
+    @media print{
+      body{background:#fff!important;color:#000}
+      header,.wrap,.btn,#reciboActions,#toasts,.sidebar,.menu-toggle{display:none!important}
+      .main-content{margin-left:0!important}
+      #reciboModal{position:static;display:block!important;background:none;padding:0}
+      #reciboModal .paper{box-shadow:none;border-radius:0;color:#000;background:#fff;max-height:none;overflow:visible;padding:0}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== MENU TOGGLE BUTTON ========== -->
+<button id="menuToggle" class="menu-toggle">
+  <i class="fa-solid fa-bars"></i>
+</button>
+
+<!-- ========== SIDEBAR ========== -->
+<aside id="sidebar" class="sidebar collapsed">
+  <nav id="adminNav"></nav>
+</aside>
+
+<!-- ========== MAIN CONTENT ========== -->
+<div class="main-content">
+
+<!-- ========== ADMIN HEADER ========== -->
+<header id="appHeader" class="hidden">
+  <div class="wrap top">
+    <div class="brand">
+      <div class="logoBox"><img id="appLogo" alt="Ponto a Ponto"/></div>
+      <div>
+        <h1>Ponto a Ponto Logística</h1>
+        <p id="headerRoleLabel">Sistema Interno</p>
+      </div>
+    </div>
+    <div class="backup-bar" id="backupIndicator">
+      <span class="dot" id="backupDot"></span>
+      <span id="backupLabel">Nunca</span>
+      <button onclick="Backup.doBackupNow()" class="btn secondary" style="padding:2px 8px;font-size:11px;margin-left:6px"><i class="fa-solid fa-database"></i></button>
+    </div>
+  </div>
+</header>
+
+<!-- ========== CLIENT HEADER ========== -->
+<header id="clientHeader" class="hidden">
+  <div class="wrap top">
+    <div class="brand">
+      <div class="logoBox"><img id="clientLogo" alt="Ponto a Ponto"/></div>
+      <div>
+        <h1>Ponto a Ponto Logística</h1>
+        <p style="color:var(--brand-sky)">Área do Cliente</p>
+      </div>
+    </div>
+    <div class="flex">
+      <span id="clientWelcome" style="color:var(--muted);font-size:13px"></span>
+      <button class="btn secondary" onclick="Auth.logout()"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ========== LOGIN ========== -->
+  <section id="view-login">
+    <div style="text-align:center;margin:40px 0">
+      <div style="width:100px;height:100px;margin:0 auto 20px;background:#fff;border-radius:24px;padding:10px;box-shadow:0 10px 40px rgba(255,122,24,.3)">
+        <img id="loginLogo" style="width:100%;height:100%;object-fit:contain" alt="Logo"/>
+      </div>
+      <h2 style="color:#fff;margin-bottom:8px;justify-content:center">Ponto a Ponto Logística</h2>
+      <p style="color:var(--muted)">Plataforma de Gestão & Rastreamento</p>
+    </div>
+    <div class="card" style="max-width:480px;margin:0 auto">
+      <div class="login-tabs">
+        <button class="login-tab active" onclick="LoginUI.switchTab('admin')"><i class="fa-solid fa-lock"></i> Administração</button>
+        <button class="login-tab" onclick="LoginUI.switchTab('client')"><i class="fa-solid fa-user"></i> Área do Cliente</button>
+        <button class="login-tab" onclick="LoginUI.switchTab('track')"><i class="fa-solid fa-location-dot"></i> Rastrear Pedido</button>
+      </div>
+
+      <!-- Admin Login -->
+      <div class="login-pane active" id="pane-admin">
+        <h2>Login Administrativo</h2>
+        <label>Utilizador</label>
+        <input id="admin_user" placeholder="Ex: admin" autocomplete="username"/>
+        <label>Palavra-passe</label>
+        <input id="admin_pass" type="password" placeholder="••••••" autocomplete="current-password"/>
+        <div class="remember-me">
+          <input type="checkbox" id="remember_admin">
+          <label for="remember_admin" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px">Lembrar-me neste dispositivo</label>
+        </div>
+        <div class="right" style="margin-top:16px">
+          <button class="btn orange" onclick="Auth.loginAdmin()" style="width:100%"><i class="fa-solid fa-right-to-bracket"></i> Entrar como Administrador</button>
+        </div>
+        <div style="text-align:center;margin-top:12px">
+          <a href="#" onclick="Auth.forgotPassword()" style="color:var(--brand-orange);text-decoration:none;font-size:13px">
+            <i class="fa-solid fa-key"></i> Esqueceu a palavra-passe?
+          </a>
+        </div>
+      </div>
+
+      <!-- Client Login -->
+      <div class="login-pane" id="pane-client">
+        <h2>Área do Cliente</h2>
+        <label>Código de cliente</label>
+        <input id="client_user" placeholder="Ex: ANA001" style="text-transform:uppercase"/>
+        <label>Palavra-passe</label>
+        <input id="client_pass" type="password" placeholder="••••••"/>
+        <div class="remember-me">
+          <input type="checkbox" id="remember_client">
+          <label for="remember_client" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px">Lembrar-me neste dispositivo</label>
+        </div>
+        <div class="right" style="margin-top:16px">
+          <button class="btn" onclick="Auth.loginClient()" style="width:100%;background:var(--brand-sky)"><i class="fa-solid fa-user"></i> Entrar na Minha Conta</button>
+        </div>
+        <div class="muted" style="text-align:center;margin-top:12px">Peça as suas credenciais à Ponto a Ponto</div>
+      </div>
+
+      <!-- Public Tracking -->
+      <div class="login-pane" id="pane-track">
+        <h2>Rastrear Pedido</h2>
+        <p class="muted" style="margin-bottom:12px">Digite o código do pedido para consultar o estado em tempo real.</p>
+        <div class="track-input-wrap">
+          <input id="track_code" placeholder="Digite o código do pedido" style="font-size:18px;letter-spacing:2px;text-transform:uppercase;text-align:center"/>
+          <button class="btn orange" onclick="PublicTracking.search()" style="white-space:nowrap"><i class="fa-solid fa-magnifying-glass"></i> Rastrear</button>
+        </div>
+        <div id="trackResult" style="margin-top:20px"></div>
+      </div>
+
+      <div class="hr"></div>
+      <div class="muted" style="text-align:center">Versão 8.0 — Plataforma Multi-Utilizador</div>
+    </div>
+  </section>
+
+  <!-- ========== DASHBOARD ========== -->
+  <section id="view-dashboard" class="hidden">
+    <div class="card">
+      <h2>Visão Geral do Negócio</h2>
+      <div class="kpi" id="kpis"></div>
+      <div class="hr"></div>
+      <div class="grid">
+        <div class="card" style="background:rgba(0,0,0,.15)">
+          <h2>Pedidos Recentes</h2>
+          <div class="table-responsive"><table id="tblRecent"></table></div>
+        </div>
+        <div>
+          <div class="card" style="background:linear-gradient(135deg,rgba(255,122,24,.1),rgba(43,108,255,.1));border-color:rgba(255,122,24,.3)">
+            <h2 style="color:var(--brand-orange)">Pendências de Cobrança</h2>
+            <ul class="muted" id="pendencias" style="margin:0;padding-left:20px;line-height:2"></ul>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <h2>Resumo Financeiro</h2>
+            <div id="resumoFinanceiro" class="muted">Carregando...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CLIENTES ========== -->
+  <section id="view-clientes" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Novo Cliente</h2>
+        <div class="row"><div><label>Nome completo</label><input id="c_nome" placeholder="Ex: Ana Maria"/></div><div><label>Telefone/WhatsApp</label><input id="c_tel" placeholder="+258 84 ..."/></div></div>
+        <div class="row"><div><label>Cidade</label><input id="c_cidade" placeholder="Maputo"/></div><div><label>Bairro/Endereço</label><input id="c_end" placeholder="Polana"/></div></div>
+        <label>Observações</label><textarea id="c_obs" placeholder="Notas do cliente..."></textarea>
+        <div class="right" style="margin-top:12px">
+          <button class="btn orange" id="btnGuardarCliente" onclick="Clientes.add()"><i class="fa-solid fa-floppy-disk"></i> Guardar Cliente</button>
+          <button class="btn secondary hidden" id="btnUpdateCliente" onclick="Clientes.update()"><i class="fa-solid fa-pen-to-square"></i> Atualizar</button>
+          <button class="btn secondary hidden" id="btnCancelEditCliente" onclick="Clientes.cancelEdit()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+        </div>
+        <input type="hidden" id="c_editId"/>
+
+        <div class="hr"></div>
+        <div class="note" id="credenciaisBox" style="display:none">
+          <h2 style="color:var(--success)"><i class="fa-solid fa-circle-check"></i> Credenciais do Cliente</h2>
+          <p>Envie estas credenciais ao cliente para acesso ao portal:</p>
+          <div style="background:rgba(0,0,0,.3);padding:16px;border-radius:8px;margin:12px 0;font-family:monospace;font-size:16px">
+            <div>Utilizador: <b id="credUser" style="color:var(--brand-orange)"></b></div>
+            <div>Senha: <b id="credPass" style="color:var(--success)"></b></div>
+          </div>
+          <button class="btn wa" onclick="Clientes.shareCredentials()"><i class="fa-brands fa-whatsapp"></i> Enviar via WhatsApp</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="flex" style="justify-content:space-between;margin-bottom:12px">
+          <h2>Base de Clientes</h2>
+          <input id="c_search" placeholder="Pesquisar..." style="width:200px" oninput="Clientes.render()"/>
+        </div>
+        <div class="table-responsive"><table id="tblClientes"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PEDIDOS ========== -->
+  <section id="view-pedidos" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2 id="formTitulo">Novo Pedido</h2>
+        <label>Cliente</label><select id="p_cliente" style="background:rgba(0,0,0,.3)"></select>
+        <div class="row"><div><label>Status</label><select id="p_status"></select></div><div><label>Modalidade</label><select id="p_mod" onchange="PedidosUI.onModalidadeChange()"><option value="indef">A definir</option><option value="aereo">Aéreo (KG)</option><option value="maritimo">Marítimo (CBM)</option></select></div></div>
+        <label>Observações</label><textarea id="p_obs" placeholder="Instruções..."></textarea>
+        <div class="hr"></div>
+        <h2 style="color:var(--brand-orange)">Adicionar Produto</h2>
+        <div class="itemCard">
+          <div class="itemGrid"><div><label>Descrição/Tamanho/Cor</label><textarea id="i_desc" placeholder="Ex: Ténis Nike, branco, 42" style="min-height:60px"></textarea></div><div><label>Link fornecedor</label><input id="i_link" placeholder="https://1688.com/..."/><label>Imagem</label><input id="i_img" type="file" accept="image/*" style="padding:8px"/></div></div>
+          <div class="row3" style="margin-top:12px"><div><label>Quantidade</label><input id="i_qtd" type="number" min="1" value="1"/></div><div><label>Preço unit. (MZN)</label><input id="i_preco" type="number" step="1" placeholder="2000"/></div><div><label id="i_medida_label">CBM/KG</label><input id="i_medida" type="number" step="0.0001" placeholder="0.0300"/><div class="muted" id="i_medida_help"></div></div></div>
+          <div class="right" style="margin-top:12px"><button class="btn orange" onclick="PedidosUI.addItemToDraft()"><i class="fa-solid fa-plus"></i> Adicionar ao Pedido</button></div>
+        </div>
+        <div class="hr"></div>
+        <h2>Itens <span id="contadorItens" style="color:var(--brand-orange);font-size:14px">(0)</span></h2>
+        <div id="draftItens" style="min-height:60px;border:2px dashed rgba(255,122,24,.3);border-radius:12px;padding:16px;text-align:center;color:var(--muted)">Nenhum item ainda</div>
+        <div class="hr"></div>
+        <div class="row3"><div><label>Envio est. (MZN)</label><input id="p_envio" type="number" step="1" placeholder="Frete"/></div><div><label>Câmbio (CNY→MZN)</label><input id="p_cambio" type="number" step="0.01" min="0.01"/></div><div><label>Total Produtos</label><input id="p_total_produtos" disabled style="background:rgba(255,122,24,.1);border-color:var(--brand-orange);color:var(--brand-orange);font-weight:bold"/></div></div>
+        <div class="note" style="margin-top:16px"><b>Regras:</b> Preço mín: <b id="minPrecoTxt">200 MZN</b> | Entrada: Produtos + <b id="pctEnvioTxt">50%</b> envio</div>
+        <div class="right" style="margin-top:16px;gap:10px">
+          <button class="btn orange" id="btnCreatePedido" onclick="Pedidos.createFromDraft()" style="padding:14px 32px;font-size:15px"><i class="fa-solid fa-check"></i> Finalizar Pedido</button>
+          <button class="btn hidden" id="btnUpdatePedido" style="padding:14px 32px;font-size:15px;background:var(--success)" onclick="Pedidos.updateFromDraft()"><i class="fa-solid fa-floppy-disk"></i> Atualizar Pedido</button>
+          <button class="btn danger hidden" id="btnCancelEditPedido" onclick="PedidosUI.cancelEdit()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="flex" style="justify-content:space-between;margin-bottom:12px">
+          <h2>Lista de Pedidos</h2>
+          <div class="flex"><input id="p_search" placeholder="Pesquisar..." style="width:180px"/><select id="p_filter_status" style="width:160px"></select></div>
+        </div>
+        <div class="table-responsive"><table id="tblPedidos"></table></div>
+        <div class="flex" style="justify-content:center;margin-top:12px;gap:16px">
+          <button class="btn secondary" onclick="Pedidos.prevPage()"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+          <div class="muted" id="pageInfo" style="padding:10px 0;font-weight:600"></div>
+          <button class="btn secondary" onclick="Pedidos.nextPage()">Próximo <i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <div class="hr"></div>
+        <div id="pedidoDetalhe" class="hidden"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ARMAZÉM ========== -->
+  <section id="view-armazem" class="hidden">
+    <div class="card">
+      <div class="flex" style="justify-content:space-between"><h2>Armazém China</h2><div class="flex"><button class="btn secondary" onclick="Warehouse.exportXLSX()"><i class="fa-solid fa-file-excel"></i> Excel</button><input id="w_search" placeholder="Pesquisar pedido, cliente ou tracking..." style="width:300px" oninput="Warehouse.render(true)"/><select id="w_filter" onchange="Warehouse.render(true)" style="width:200px"><option value="all">Todos</option><option value="not_arrived">Não chegou</option><option value="arrived">Chegou na China</option></select></div></div>
+      <!-- Painel de resumo (apenas pedidos sem lote) -->
+      <div class="stats-grid" id="armazemStats">
+        <div class="stat-card"><h3 id="totalProdutos">0</h3><span>Produtos no Armazém</span></div>
+        <div class="stat-card"><h3 id="totalTrackings">0</h3><span>Códigos de Rastreio</span></div>
+        <div class="stat-card"><h3 id="totalClientes">0</h3><span>Clientes</span></div>
+      </div>
+      <div class="hr"></div>
+      <h2 style="color:var(--brand-orange)">Novos Produtos</h2>
+      <p class="muted" style="margin-bottom:12px">Pedidos recebidos que ainda aguardam agrupamento em lote.</p>
+      <div class="table-responsive"><table id="tblWarehouse"></table></div>
+      <div class="hr"></div>
+      <h2 style="color:var(--brand-orange)">Pedidos Agrupados em Lotes</h2>
+      <div id="lotesNoArmazem"></div>
+    </div>
+  </section>
+
+  <!-- ========== LOTES ========== -->
+  <section id="view-lotes" class="hidden">
+    <div class="grid"><div class="card"><h2>Novo Lote</h2><div class="row"><div><label>Código</label><input id="l_codigo" placeholder="L-AER-2026-05"/></div><div><label>Tipo</label><select id="l_tipo" onchange="LotesUI.onTipoChange()"><option value="maritimo">Marítimo (CBM)</option><option value="aereo">Aéreo (KG)</option></select></div></div><div class="row"><div><label id="l_medida_label">CBM Total</label><input id="l_medida_total" type="number" step="0.0001" placeholder="15.5"/><div class="muted" id="l_medida_help"></div></div><div><label>Custo total (MZN)</label><input id="l_custo_total" type="number" step="1" placeholder="Valor agência"/></div></div><label>Tracking</label><input id="l_track" placeholder="Rastreio internacional"/><div class="right" style="margin-top:12px"><button class="btn orange" onclick="Lotes.add()"><i class="fa-solid fa-box"></i> Criar Lote</button></div></div><div class="card"><h2>Gestão de Lotes</h2><div class="table-responsive"><table id="tblLotes"></table></div><div class="hr"></div><div id="loteDetalhe" class="hidden"></div></div></div>
+  </section>
+
+  <!-- ========== FINANCEIRO ========== -->
+  <section id="view-financeiro" class="hidden">
+    <div class="grid"><div class="card"><h2>Registar Movimento</h2><label>Pedido (opcional)</label><select id="f_pedido" style="background:rgba(0,0,0,.3)"></select><div class="row"><div><label>Tipo</label><select id="f_tipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select></div><div><label>Categoria</label><select id="f_cat"></select></div></div><div class="row"><div><label>Valor (MZN)</label><input id="f_valor" type="number" step="1" placeholder="0"/></div><div><label>Método</label><select id="f_metodo"><option>M-Pesa</option><option>eMola</option><option>Transferência</option><option>Cash</option></select></div></div><label>Descrição</label><input id="f_desc" placeholder="Pagamento referente a..."/><div class="right" style="margin-top:12px"><button class="btn orange" onclick="Financeiro.add()"><i class="fa-solid fa-money-bill-wave"></i> Registar</button></div></div><div class="card"><div class="flex" style="justify-content:space-between;margin-bottom:12px"><h2>Histórico</h2><div class="flex"><button class="btn secondary" onclick="App.exportJSON()"><i class="fa-solid fa-download"></i> Backup</button><button class="btn secondary" onclick="App.importJSON()"><i class="fa-solid fa-upload"></i> Restaurar</button></div></div><div class="table-responsive"><table id="tblMov"></table></div></div></div>
+  </section>
+
+  <!-- ========== AUDITORIA ========== -->
+  <section id="view-auditoria" class="hidden"><div class="card"><div class="flex" style="justify-content:space-between;margin-bottom:12px"><h2>Log de Auditoria</h2><button class="btn danger" onclick="Auditoria.clear()"><i class="fa-solid fa-trash"></i> Limpar</button></div><div class="table-responsive" style="max-height:600px;overflow-y:auto"><table id="tblAudit"></table></div></div></section>
+
+  <!-- ========== UTILIZADORES ========== -->
+  <section id="view-usuarios" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2 id="formUsuarioTitle">Novo Utilizador Administrativo</h2>
+        <input type="hidden" id="u_editId"/>
+        <div class="row"><div><label>Nome completo</label><input id="u_nome" placeholder="Ex: João Silva"/></div><div><label>Utilizador (login)</label><input id="u_user" placeholder="Ex: joao"/></div></div>
+        <div class="row"><div><label>Palavra-passe</label><input id="u_pass" type="password" placeholder="Mín. 4 caracteres"/></div><div><label>Perfil / Cargo</label><select id="u_role"><option value="admin">Administrador</option><option value="financeiro">Financeiro</option><option value="operador">Operador</option><option value="armazem">Armazém</option><option value="entregador">Entregador</option></select></div></div>
+        <div class="right" style="margin-top:12px">
+          <button class="btn orange" id="btnCreateAdminUser" onclick="Users.addAdmin()"><i class="fa-solid fa-user-plus"></i> Criar Utilizador</button>
+          <button class="btn hidden" id="btnUpdateAdminUser" style="background:var(--success)" onclick="Users.saveEditAdmin()"><i class="fa-solid fa-floppy-disk"></i> Atualizar Utilizador</button>
+          <button class="btn secondary hidden" id="btnCancelEditAdminUser" onclick="Users.cancelEditAdmin()"><i class="fa-solid fa-xmark"></i> Cancelar</button>
+        </div>
+        <div class="hr"></div>
+        <h2>Utilizadores Administrativos</h2>
+        <div class="table-responsive"><table id="tblAdminUsers"></table></div>
+      </div>
+      <div class="card">
+        <h2>Contas de Clientes</h2>
+        <div class="muted" style="margin-bottom:12px">Contas geradas automaticamente ao registar clientes.</div>
+        <div class="table-responsive"><table id="tblClientUsers"></table></div>
+        <div class="hr"></div>
+        <div style="margin-top:16px">
+          <label>Gerar acesso para cliente existente</label>
+          <div class="flex">
+            <select id="selClientWithoutUser" style="background:rgba(0,0,0,.3); flex:1"></select>
+            <button class="btn orange" onclick="Users.createClientAccessFromSelect()"><i class="fa-solid fa-user-plus"></i> Criar Acesso</button>
+          </div>
+          <div id="clientAccessCredBox" class="note" style="display:none; margin-top:12px">
+            <h2 style="color:var(--success)"><i class="fa-solid fa-circle-check"></i> Acesso Criado</h2>
+            <p>Credenciais para o cliente:</p>
+            <div style="background:rgba(0,0,0,.3);padding:12px;border-radius:8px;margin:8px 0;font-family:monospace;font-size:14px">
+              <div>Utilizador: <b id="credClientUser" style="color:var(--brand-orange)"></b></div>
+              <div>Senha: <b id="credClientPass" style="color:var(--success)"></b></div>
+            </div>
+            <button class="btn wa" onclick="Users.shareClientCreds()"><i class="fa-brands fa-whatsapp"></i> Enviar via WhatsApp</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CONFIG ========== -->
+  <section id="view-config" class="hidden"><div class="card" style="max-width:800px;margin:0 auto"><h2>Configurações</h2><div class="row"><div><label>Nome empresa</label><input id="cfg_nome"/></div><div><label>Telefone</label><input id="cfg_tel"/></div></div><div class="row"><div><label>Email</label><input id="cfg_email"/></div><div><label>Câmbio (CNY→MZN)</label><input id="cfg_cambio" type="number" step="0.01"/></div></div><div class="row"><div><label>Preço mínimo (MZN)</label><input id="cfg_min_preco" type="number"/></div><div><label>% envio antecipado</label><input id="cfg_pct_envio" type="number"/></div></div><div class="row"><div><label>Próximo nº pedido</label><input id="cfg_next_pedido" type="number"/></div><div><label>Logotipo</label><input id="cfg_logo" type="file" accept="image/*"/></div></div><div class="hr"></div><div class="flex" style="justify-content:space-between"><h2 style="margin:0">Backup</h2><div class="flex"><button class="btn" onclick="Backup.doBackupNow()" style="background:var(--success)"><i class="fa-solid fa-database"></i> Backup Agora</button><button class="btn secondary" onclick="Backup.downloadAutoBackup()"><i class="fa-solid fa-download"></i> Exportar Auto-Backup</button><button class="btn secondary" onclick="App.importJSON()"><i class="fa-solid fa-upload"></i> Restaurar Backup</button></div></div><div class="muted" style="margin-top:8px">Último: <span id="lastBackupTime">-</span></div><div class="right" style="margin-top:20px"><button class="btn" onclick="Config.save()" style="background:var(--success)"><i class="fa-solid fa-floppy-disk"></i> Guardar</button><button class="btn danger" onclick="App.resetAll()"><i class="fa-solid fa-triangle-exclamation"></i> Reset Total</button></div></div></section>
+
+  <!-- ========== HISTÓRICO (ENTREGUES) ========== -->
+  <section id="view-historico" class="hidden">
+    <div class="card">
+      <h2>Histórico de Entregas</h2>
+      <div id="historicoList"></div>
+    </div>
+  </section>
+
+  <!-- ========== CLIENT PORTAL ========== -->
+  <section id="view-client-portal" class="hidden">
+    <div class="client-welcome">
+      <h2 id="clientPortalWelcome" style="color:#fff;font-size:24px">Olá!</h2>
+      <p class="muted" style="font-size:14px">Acompanhe os seus pedidos em tempo real</p>
+    </div>
+    <div id="clientOrdersList"></div>
+    <div id="clientOrderDetail" class="hidden"></div>
+  </section>
+</div>
+</div><!-- /main-content -->
+
+<!-- ========== RECIBO MODAL ========== -->
+<div id="reciboModal" class="modal" onclick="if(event.target===this) Recibo.close()">
+  <div class="paper">
+    <div class="flex" style="justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div class="flex" style="gap:16px;align-items:center"><img id="recLogo" alt="Logo" style="width:80px;height:80px;object-fit:contain;border-radius:12px;border:1px solid #ddd;padding:8px;background:#fff"/><div><h3 id="recEmpresa">Ponto a Ponto</h3><div style="color:#666;font-size:13px" id="recContatos"></div></div></div>
+      <div style="text-align:right"><div style="font-size:24px;font-weight:800;color:var(--brand-navy)">RECIBO</div><div style="color:#666;font-size:13px" id="recData"></div></div>
+    </div>
+    <div style="background:linear-gradient(90deg,var(--brand-navy),var(--brand-orange));height:3px;border-radius:2px;margin:16px 0"></div>
+    <div class="row" style="margin-bottom:20px"><div><div style="font-size:13px;color:#666"><b>Cliente:</b></div><div style="font-size:15px;color:#000;font-weight:600" id="recCliente"></div><div style="font-size:13px;color:#666" id="recClienteTel"></div></div><div style="text-align:right"><div style="font-size:13px;color:#666"><b>Pedido:</b> <span id="recPedido" style="color:#000;font-weight:600"></span></div><div style="font-size:13px;color:#666"><b>Status:</b> <span id="recStatus"></span></div></div></div>
+    <table style="margin-bottom:20px"><thead style="background:#f8f9fa"><tr><th style="text-align:left;padding:12px;border-bottom:2px solid var(--brand-navy)">Produto</th><th style="text-align:center;padding:12px;border-bottom:2px solid var(--brand-navy)">Qtd</th><th style="text-align:right;padding:12px;border-bottom:2px solid var(--brand-navy)">Unit.</th><th style="text-align:right;padding:12px;border-bottom:2px solid var(--brand-navy)">Subtotal</th></tr></thead><tbody id="recLinhas"></tbody>
+    <tfoot style="background:#f8f9fa;font-weight:600"><tr><td colspan="3" style="text-align:right;padding:12px;border-top:2px solid #ddd">Total Produtos:</td><td style="text-align:right;padding:12px;border-top:2px solid #ddd" id="recTotalProdutos"></td></tr><tr><td colspan="3" style="text-align:right;padding:12px">Envio:</td><td style="text-align:right;padding:12px" id="recEnvio"></td></tr><tr style="font-size:16px;color:var(--brand-navy)"><td colspan="3" style="text-align:right;padding:12px;border-top:2px solid var(--brand-orange)">TOTAL:</td><td style="text-align:right;padding:12px;border-top:2px solid var(--brand-orange)" id="recTotal"></td></tr><tr style="color:green"><td colspan="3" style="text-align:right;padding:12px">Pago:</td><td style="text-align:right;padding:12px" id="recPago"></td></tr><tr style="color:red;font-weight:700"><td colspan="3" style="text-align:right;padding:12px">Saldo:</td><td style="text-align:right;padding:12px" id="recSaldo"></td></tr></tfoot></table>
+    <div class="flex" id="reciboActions" style="margin-top:24px;justify-content:center;gap:16px"><button class="btn secondary" onclick="Recibo.close()"><i class="fa-solid fa-xmark"></i> Fechar</button><button class="btn wa" onclick="Recibo.shareWA()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button><button class="btn" onclick="window.print()" style="background:var(--brand-navy)"><i class="fa-solid fa-print"></i> Imprimir / PDF</button></div>
+  </div>
+</div>
+
+<!-- ========== WHATSAPP NOTIFICATION MODAL ========== -->
+<div id="waModal" class="modal" onclick="if(event.target===this) this.style.display='none'">
+  <div class="paper" style="max-width:500px">
+    <h3 style="display:flex;align-items:center;gap:8px"><i class="fa-brands fa-whatsapp" style="color:var(--wa);font-size:24px"></i> Notificar Cliente via WhatsApp</h3>
+    <div class="wa-preview"><div class="wa-bubble" id="waPreviewMsg"></div></div>
+    <div class="flex" style="justify-content:center;gap:12px;margin-top:16px">
+      <button class="btn secondary" onclick="document.getElementById('waModal').style.display='none'">Cancelar</button>
+      <button class="btn wa" id="waSendBtn" style="font-size:16px;padding:14px 32px"><i class="fa-brands fa-whatsapp"></i> Enviar no WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ========================================
+   PONTO A PONTO LOGÍSTICA v8.0
+   Plataforma Multi-Utilizador Completa
+   ======================================== */
+
+const DBKEY = "pap_v80_db";
+const BACKUP_KEY = "pap_v80_bk";
+const SESSION_KEY = "pap_session";
+const MASTER_CODE = "PAP2026MASTER";
+const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+const now = () => Date.now();
+const fmtDate = ms => new Date(ms).toLocaleString("pt-MZ");
+const money = n => (Number(n || 0)).toLocaleString("pt-MZ", { maximumFractionDigits: 0 }) + " MZN";
+const escapeHtml = s => String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+const STATUS = [
+  "Novo (aguardando cotação)",
+  "Cotado / aguardando pagamento",
+  "Pago (pronto para comprar)",
+  "Comprado (na China)",
+  "Recebido na agência (China)",
+  "Em trânsito para Moçambique",
+  "Chegou a Moçambique",
+  "Pronto para levantamento/entrega",
+  "Entregue",
+  "Cancelado/Problema"
+];
+
+const ROLES = {
+  admin: { label: "Administrador", views: ["dashboard", "clientes", "pedidos", "armazem", "lotes", "financeiro", "auditoria", "usuarios", "config", "historico"], icon: '<i class="fa-solid fa-circle" style="color:#ef4444"></i>' },
+  financeiro: { label: "Financeiro", views: ["dashboard", "pedidos", "financeiro", "auditoria"], icon: '<i class="fa-solid fa-circle" style="color:#21c55d"></i>' },
+  operador: { label: "Operador", views: ["dashboard", "clientes", "pedidos", "armazem", "lotes", "historico"], icon: '<i class="fa-solid fa-circle" style="color:#60a5fa"></i>' },
+  armazem: { label: "Armazém", views: ["armazem", "pedidos"], icon: '<i class="fa-solid fa-circle" style="color:#fbbf24"></i>' },
+  entregador: { label: "Entregador", views: ["pedidos"], icon: '<i class="fa-solid fa-circle" style="color:#c084fc"></i>' }
+};
+
+const WA_MESSAGES = {
+  "Pago (pronto para comprar)": (n, c) => `*PONTO A PONTO LOGÍSTICA*\n\nOlá ${n} 👋\n\nO pagamento do seu pedido *${c}* foi confirmado ✅\nVamos proceder à compra do(s) produto(s).\n\nAguarde actualizações!`,
+  "Comprado (na China)": (n, c) => `*PONTO A PONTO LOGÍSTICA*\n\nOlá ${n} 👋\n\nO seu pedido *${c}* foi *comprado com sucesso* na China 🇨🇳✅\n\nAgora aguardamos a chegada ao nosso armazém.`,
+  "Recebido na agência (China)": (n, c) => `*PONTO A PONTO LOGÍSTICA*\n\nOlá ${n} 👋\n\nO seu pedido *${c}* chegou ao nosso armazém na China 📦✅\n\nEstá a ser preparado para envio a Moçambique.`,
+  "Em trânsito para Moçambique": (n, c) => `*PONTO A PONTO LOGÍSTICA*\n\nOlá ${n} 👋\n\nÓptima notícia! 🚢✈️\nO seu pedido *${c}* está *em trânsito* para Moçambique!\n\nAcompanhe em: rastreio.pontoapontologistica.com`,
+  "Chegou a Moçambique": (n, c) => `*PONTO A PONTO LOGÍSTICA*\n\nOlá ${n} 👋\n\n🎉 O seu pedido *${c}* já *chegou a Moçambique*!\n\nEstamos a processar o desalfandegamento. Entraremos em contacto em breve.`,
+  "Pronto para levantamento/entrega": (n, c) => `*PONTO A PONTO LOGÍSTICA*\n\nOlá ${n} 👋\n\n✅ O seu pedido *${c}* está *pronto para levantamento/entrega*!\n\nPor favor entre em contacto para agendar.`,
+  "Entregue": (n, c) => `*PONTO A PONTO LOGÍSTICA*\n\nOlá ${n} 👋\n\n🎊 O seu pedido *${c}* foi *entregue com sucesso*!\n\nObrigado por confiar na Ponto a Ponto Logística! ❤️`
+};
+
+const Toast = {
+  show(msg, type = "info") {
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.setAttribute("role", "alert");
+    const c = type === "ok" ? "var(--success)" : type === "bad" ? "var(--danger)" : "var(--brand-orange)";
+    el.style.borderLeft = `4px solid ${c}`;
+    const icon = type === "ok" ? '<i class="fa-solid fa-circle-check"></i>' : type === "bad" ? '<i class="fa-solid fa-circle-xmark"></i>' : '<i class="fa-solid fa-circle-info"></i>';
+    el.innerHTML = `<span style="color:${c}">${icon}</span> ${msg}`;
+    document.getElementById("toasts").appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+};
+
+// ========== GERENCIAMENTO DE SESSÃO ==========
+const SessionManager = {
+  save(sessionData, remember = false) {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+    if (remember) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ ...sessionData, remembered: true }));
+    } else {
+      localStorage.removeItem(SESSION_KEY);
+    }
+  },
+
+  get() {
+    let data = sessionStorage.getItem(SESSION_KEY);
+    if (data) {
+      try { return JSON.parse(data); } catch (e) { /* ignora */ }
+    }
+    data = localStorage.getItem(SESSION_KEY);
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(parsed));
+        return parsed;
+      } catch (e) { /* ignora */ }
+    }
+    return null;
+  },
+
+  clear() {
+    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
+  },
+
+  isActive() {
+    const session = this.get();
+    if (!session) return false;
+    if (now() - session.at > 12 * 60 * 60 * 1000) {
+      this.clear();
+      return false;
+    }
+    return true;
+  }
+};
+
+// ========== ARMAZENAMENTO VIA LOCALFORAGE (INDEXEDDB) ==========
+const Storage = {
+  async load() {
+    try {
+      const data = await localforage.getItem(DBKEY);
+      if (data) return data;
+    } catch (e) {
+      console.error("Erro ao carregar dados do IndexedDB:", e);
+    }
+    return {
+      config: {
+        empresa: "Ponto a Ponto Logística",
+        tel: "+258 851 828 395",
+        email: "contato@pontoapontologistica.com",
+        cambio: 11.5,
+        minPreco: 200,
+        pctEnvio: 50,
+        logoDataURL: "",
+        nextPedidoNumber: 1
+      },
+      adminUsers: [{ id: uid(), username: "admin", nome: "Administrador", role: "admin", password: "1234", active: true, createdAt: now() }],
+      clientUsers: [],
+      clientes: [],
+      pedidos: [],
+      rastreios: [],
+      lotes: [],
+      loteItens: [],
+      movimentos: [],
+      audit: []
+    };
+  },
+
+  save(d) {
+    if (d.session) delete d.session;
+    localforage.setItem(DBKEY, d)
+      .then(() => console.log("Dados guardados no IndexedDB com sucesso"))
+      .catch(e => {
+        console.error("Erro ao guardar dados no IndexedDB:", e);
+        Toast.show("Falha ao guardar dados: " + e.message, "bad");
+      });
+  }
+};
+
+let db = null;
+
+// ========== MIGRAÇÃO ==========
+function migrateData(data) {
+  delete data.session;
+  if (!data.adminUsers) data.adminUsers = [{ id: uid(), username: "admin", nome: "Administrador", role: "admin", password: "1234", active: true, createdAt: now() }];
+  if (!data.clientUsers) data.clientUsers = [];
+  if (!data.config.nextPedidoNumber) data.config.nextPedidoNumber = (data.pedidos?.length || 0) + 1;
+
+  (data.pedidos || []).forEach(p => {
+    (p.itens || []).forEach(it => {
+      if (!it.medidaTipo) {
+        it.medidaTipo = (p.modalidade === "aereo") ? "kg" : "cbm";
+        it.medidaValor = it.medidaValor ?? it.cbm ?? 0;
+        delete it.cbm;
+      }
+      if (it.arrivedChina == null) it.arrivedChina = false;
+      if (it.arrivedAt == null) it.arrivedAt = null;
+    });
+    if (!p.tracking) p.tracking = null;
+    if (p.status === "Entregue" && !p.dataEntrega) {
+      p.dataEntrega = p.statusHist?.find(h => h.status === "Entregue")?.at || now();
+    }
+    if (p.loteId === undefined) p.loteId = null;
+  });
+
+  (data.loteItens || []).forEach(li => {
+    const pedido = (data.pedidos || []).find(p => p.id === li.pedidoId);
+    if (pedido && !pedido.loteId) {
+      pedido.loteId = li.loteId;
+    }
+  });
+
+  let maxNumber = 0;
+  data.pedidos.forEach(p => {
+    const match = p.codigo?.match(/^PED-(\d{4})-(\d{5})$/);
+    if (match) {
+      const num = parseInt(match[2], 10);
+      if (num > maxNumber) maxNumber = num;
+      return;
+    }
+    const digits = p.codigo?.replace(/\D/g, '');
+    if (!digits) return;
+    let year, number;
+    if (digits.length >= 5) {
+      const possibleYear = parseInt(digits.substring(0, 4), 10);
+      if (possibleYear >= 2020 && possibleYear <= 2099) {
+        year = possibleYear;
+        number = parseInt(digits.substring(4), 10);
+      } else {
+        year = new Date(p.criadoEm).getFullYear();
+        number = parseInt(digits, 10);
+      }
+    } else {
+      year = new Date(p.criadoEm).getFullYear();
+      number = parseInt(digits, 10);
+    }
+    p.codigo = `PED-${year}-${String(number).padStart(5, '0')}`;
+    if (number > maxNumber) maxNumber = number;
+  });
+  if (maxNumber >= (data.config.nextPedidoNumber || 1)) {
+    data.config.nextPedidoNumber = maxNumber + 1;
+  }
+
+  return data;
+}
+
+// ========== BACKUP ==========
+const Backup = {
+  INTERVAL: 5,
+  saveAuto() {
+    try {
+      const backupData = { ...db };
+      delete backupData.session;
+      localStorage.setItem(BACKUP_KEY, JSON.stringify(backupData));
+      const t = now();
+      localStorage.setItem(BACKUP_KEY + "_ts", t.toString());
+      this.updateUI(t);
+      return true;
+    } catch (e) {
+      console.error("Erro ao salvar backup no localStorage:", e);
+      return false;
+    }
+  },
+  lastTime() {
+    const t = localStorage.getItem(BACKUP_KEY + "_ts");
+    return t ? parseInt(t) : null;
+  },
+  updateUI(ts) {
+    const dot = document.getElementById("backupDot"),
+          lbl = document.getElementById("backupLabel"),
+          lt = document.getElementById("lastBackupTime");
+    if (ts) {
+      if (dot) dot.classList.remove("error");
+      if (lbl) lbl.textContent = fmtDate(ts);
+      if (lt) lt.textContent = fmtDate(ts);
+    } else {
+      if (dot) dot.classList.add("error");
+      if (lbl) lbl.textContent = "Falhou";
+    }
+  },
+  doBackupNow() {
+    this.saveAuto() ? Toast.show("Backup OK!", "ok") : Toast.show("Falha", "bad");
+  },
+  start() {
+    const l = this.lastTime();
+    this.updateUI(l);
+    if (!l) this.saveAuto();
+    setInterval(() => this.saveAuto(), this.INTERVAL * 60 * 1000);
+  },
+  downloadAutoBackup() {
+    try {
+      const raw = localStorage.getItem(BACKUP_KEY);
+      if (!raw) return Toast.show("Nenhum backup", "bad");
+      const blob = new Blob([raw], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      Toast.show("Exportado", "ok");
+    } catch (e) {
+      Toast.show("Erro", "bad");
+    }
+  }
+};
+
+// ========== CALC ==========
+const Calc = {
+  totalProdutos(p) { return (p.itens || []).reduce((a, it) => a + (Number(it.precoUnit || 0) * Number(it.qtd || 0)), 0); },
+  totalMedida(p) { return (p.itens || []).reduce((a, it) => a + (Number(it.medidaValor || 0) * Number(it.qtd || 1)), 0); },
+  expectedTotal(p) { return this.totalProdutos(p) + Number(p.envioEstimado || 0); },
+  entradas(pid) { return db.movimentos.filter(m => m.pedidoId === pid && m.tipo === "entrada").reduce((a, m) => a + Number(m.valor || 0), 0); },
+  saldo(p) { return this.expectedTotal(p) - this.entradas(p.id); }
+};
+
+// ========== BRANDING ==========
+const Branding = {
+  getLogo(w = "header") { return db?.config?.logoDataURL || "logo.png"; },
+  apply() { ["loginLogo", "appLogo", "clientLogo"].forEach(id => { const el = document.getElementById(id); if (el) el.src = this.getLogo(); }); }
+};
+
+// ========== LOGIN UI ==========
+const LoginUI = {
+  switchTab(tab) {
+    document.querySelectorAll(".login-tab").forEach((b, i) => { b.classList.toggle("active", ["admin", "client", "track"][i] === tab); });
+    document.querySelectorAll(".login-pane").forEach((p, i) => { p.classList.toggle("active", ["admin", "client", "track"][i] === tab); });
+    document.getElementById("trackResult").innerHTML = "";
+  }
+};
+
+// ========== AUTH ==========
+const Auth = {
+  loginAdmin() {
+    const user = (document.getElementById("admin_user").value || "").trim().toLowerCase();
+    const pass = (document.getElementById("admin_pass").value || "").trim();
+    const remember = document.getElementById("remember_admin")?.checked || false;
+    const u = db.adminUsers.find(a => a.username.toLowerCase() === user && a.password === pass && a.active);
+    if (!u) return Toast.show("Utilizador ou senha incorrectos.", "bad");
+
+    const sessionData = { type: "admin", userId: u.id, role: u.role, at: now() };
+    SessionManager.save(sessionData, remember);
+
+    Storage.save(db);
+    Auditoria.log("LOGIN", "ADMIN", u.id, { username: u.username, role: u.role });
+    Toast.show(`Bem-vindo, ${u.nome}!`, "ok");
+    App.showAdmin();
+  },
+  loginClient() {
+    const user = (document.getElementById("client_user").value || "").trim().toUpperCase();
+    const pass = (document.getElementById("client_pass").value || "").trim();
+    const remember = document.getElementById("remember_client")?.checked || false;
+    const cu = db.clientUsers.find(a => a.username.toUpperCase() === user && a.password === pass && a.active);
+    if (!cu) return Toast.show("Credenciais inválidas. Contacte a Ponto a Ponto.", "bad");
+
+    const sessionData = { type: "client", userId: cu.id, clienteId: cu.clienteId, at: now() };
+    SessionManager.save(sessionData, remember);
+    Storage.save(db);
+    Toast.show("Bem-vindo à sua área!", "ok");
+    App.showClient();
+  },
+  logout() {
+    SessionManager.clear();
+    location.reload();
+  },
+  currentUser() {
+    const session = SessionManager.get();
+    if (!session) return null;
+    if (session.type === "admin") return db.adminUsers.find(u => u.id === session.userId);
+    if (session.type === "client") return db.clientUsers.find(u => u.id === session.userId);
+    return null;
+  },
+  isAdmin() {
+    const session = SessionManager.get();
+    return session?.type === "admin";
+  },
+  isClient() {
+    const session = SessionManager.get();
+    return session?.type === "client";
+  },
+  role() {
+    const session = SessionManager.get();
+    return session?.role || "admin";
+  },
+  canView(view) {
+    if (!this.isAdmin()) return false;
+    const r = ROLES[this.role()];
+    return r?.views?.includes(view);
+  },
+  require() {
+    if (!SessionManager.isActive()) {
+      SessionManager.clear();
+      return false;
+    }
+    return true;
+  },
+
+  forgotPassword() {
+    const user = prompt("Digite o seu nome de utilizador:");
+    if (!user) return;
+
+    const acc = db.adminUsers.find(u => u.username.toLowerCase() === user.toLowerCase());
+    if (!acc) {
+      return Toast.show("Utilizador não encontrado.", "bad");
+    }
+
+    const code = prompt("Digite o Código Mestre de Administrador para redefinir a senha:");
+    if (code !== MASTER_CODE) {
+      return Toast.show("Código mestre inválido. Contacte o administrador principal.", "bad");
+    }
+
+    const novaSenha = prompt("Digite a nova palavra-passe (mín. 4 caracteres):");
+    if (!novaSenha || novaSenha.length < 4) {
+      return Toast.show("A nova senha deve ter pelo menos 4 caracteres.", "bad");
+    }
+
+    acc.password = novaSenha;
+    Storage.save(db);
+    Auditoria.log("REDEFINIR SENHA", "ADMIN_USER", acc.id, { username: acc.username });
+    Toast.show("Senha redefinida com sucesso!", "ok");
+    document.getElementById("admin_user").value = "";
+    document.getElementById("admin_pass").value = "";
+  }
+};
+
+// ========== PERMISSIONS ==========
+const Perm = {
+  canCreate() { const r = Auth.role(); return ["admin", "operador"].includes(r); },
+  canDelete() { return Auth.role() === "admin"; },
+  canFinanceiro() { return ["admin", "financeiro"].includes(Auth.role()); },
+  canConfig() { return Auth.role() === "admin"; },
+  canManageUsers() { return Auth.role() === "admin"; }
+};
+
+// ========== NAVIGATION ==========
+const ADMIN_VIEWS = ["dashboard", "clientes", "pedidos", "armazem", "lotes", "financeiro", "auditoria", "usuarios", "config", "historico"];
+const Nav = {
+  buildAdminNav() {
+    const nav = document.getElementById("adminNav");
+    const role = Auth.role();
+    const allowed = ROLES[role]?.views || ADMIN_VIEWS;
+    const labels = {
+      dashboard: '<i class="fa-solid fa-chart-line"></i> <span>Dashboard</span>',
+      clientes: '<i class="fa-solid fa-users"></i> <span>Clientes</span>',
+      pedidos: '<i class="fa-solid fa-box"></i> <span>Pedidos</span>',
+      armazem: '<i class="fa-solid fa-warehouse"></i> <span>Armazém</span>',
+      lotes: '<i class="fa-solid fa-truck-fast"></i> <span>Lotes</span>',
+      financeiro: '<i class="fa-solid fa-money-bill-wave"></i> <span>Financeiro</span>',
+      auditoria: '<i class="fa-solid fa-clipboard-check"></i> <span>Auditoria</span>',
+      usuarios: '<i class="fa-solid fa-user-gear"></i> <span>Utilizadores</span>',
+      config: '<i class="fa-solid fa-gears"></i> <span>Configurações</span>',
+      historico: '<i class="fa-solid fa-clock-rotate-left"></i> <span>Histórico</span>'
+    };
+    nav.innerHTML = allowed.map((v, i) => `<button class="tab ${i === 0 ? 'active' : ''}" data-view="${v}">${labels[v] || v}${v === 'pedidos' ? '<span class="badge" id="pedidosBadge">0</span>' : ''}</button>`).join("") +
+      `<button class="tab" onclick="Auth.logout()"><i class="fa-solid fa-right-from-bracket"></i> <span>Sair</span></button>`;
+    nav.querySelectorAll(".tab[data-view]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        nav.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        this.goto(btn.dataset.view);
+      });
+    });
+    document.getElementById("headerRoleLabel").innerHTML = `${ROLES[role]?.icon || ""} ${ROLES[role]?.label || role}`;
+  },
+  goto(view) {
+    ADMIN_VIEWS.forEach(x => { const el = document.getElementById("view-" + x); if (el) el.classList.toggle("hidden", x !== view); });
+    document.getElementById("view-client-portal").classList.add("hidden");
+    App.refreshAll(view);
+  },
+  currentView() { return ADMIN_VIEWS.find(v => { const el = document.getElementById("view-" + v); return el && !el.classList.contains("hidden"); }) || "dashboard"; }
+};
+
+// ========== AUDITORIA ==========
+const Auditoria = {
+  log(action, entity, entityId, details = {}) { const user = Auth.currentUser(); db.audit.unshift({ id: uid(), at: now(), action, entity, entityId, details, user: user?.nome || user?.username || "sistema" }); Storage.save(db); },
+  clear() { if (!confirm("Limpar auditoria?")) return; db.audit = []; Storage.save(db); Toast.show("Limpo", "ok"); App.refreshAll("auditoria"); },
+  render() { const t = document.getElementById("tblAudit"); t.innerHTML = `<thead><tr><th>Data</th><th>Utilizador</th><th>Acção</th><th>Entidade</th><th>Detalhes</th></tr></thead><tbody>${(db.audit || []).slice(0, 200).map(a => `<tr><td class="muted" style="white-space:nowrap">${fmtDate(a.at)}</td><td><span class="pill info">${escapeHtml(a.user || "")}</span></td><td><span class="pill ${a.action.includes('APAGAR') ? 'bad' : a.action.includes('CRIAR') ? 'ok' : 'info'}">${escapeHtml(a.action)}</span></td><td>${escapeHtml(a.entity)}</td><td class="muted" style="font-size:11px;max-width:300px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(JSON.stringify(a.details))}</td></tr>`).join("") || `<tr><td colspan="5"><div class="empty-state"><div class="message">Sem registos</div></div></td></tr>`}</tbody>`; }
+};
+
+// ========== USERS ==========
+const Users = {
+  editAdminId: null,
+  _lastGeneratedClientCreds: null,
+
+  addAdmin() {
+    const nome = document.getElementById("u_nome").value.trim();
+    const username = document.getElementById("u_user").value.trim().toLowerCase();
+    const password = document.getElementById("u_pass").value.trim();
+    const role = document.getElementById("u_role").value;
+    if (!nome || !username) return Toast.show("Preencha nome e utilizador", "bad");
+    if (password.length < 4) return Toast.show("Senha deve ter pelo menos 4 caracteres", "bad");
+    if (db.adminUsers.some(u => u.username.toLowerCase() === username)) return Toast.show("Utilizador já existe", "bad");
+    const u = { id: uid(), username, nome, role, password, active: true, createdAt: now() };
+    db.adminUsers.push(u); Storage.save(db);
+    Auditoria.log("CRIAR", "ADMIN_USER", u.id, { username, role });
+    Toast.show(`Utilizador ${username} criado!`, "ok");
+    ["u_nome", "u_user", "u_pass"].forEach(id => document.getElementById(id).value = "");
+    this.render();
+  },
+  generateClientUser(cliente) {
+    const existing = db.clientUsers.find(cu => cu.clienteId === cliente.id);
+    if (existing) return existing;
+    const base = cliente.nome.split(" ")[0].toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+    const num = String(db.clientUsers.length + 1).padStart(3, "0");
+    const username = base + num;
+    const password = String(Math.floor(100000 + Math.random() * 900000));
+    const cu = { id: uid(), clienteId: cliente.id, username, password, mustChangePassword: true, active: true, createdAt: now() };
+    db.clientUsers.push(cu); Storage.save(db);
+    return cu;
+  },
+  resetClientPassword(cuId) {
+    const cu = db.clientUsers.find(u => u.id === cuId); if (!cu) return;
+    const newPass = String(Math.floor(100000 + Math.random() * 900000));
+    cu.password = newPass; cu.mustChangePassword = true; Storage.save(db);
+    Toast.show(`Nova senha: ${newPass}`, "ok");
+    this.render();
+  },
+  toggleAdmin(uid_) {
+    const u = db.adminUsers.find(x => x.id === uid_); if (!u) return;
+    if (u.username === "admin") return Toast.show("Não pode desactivar o admin principal", "bad");
+    u.active = !u.active; Storage.save(db); Toast.show(u.active ? "Activado" : "Desactivado", "ok"); this.render();
+  },
+  deleteAdmin(uid_) {
+    const u = db.adminUsers.find(x => x.id === uid_);
+    if (u?.username === "admin") return Toast.show("Admin principal não pode ser eliminado", "bad");
+    if (!confirm("Eliminar utilizador?")) return;
+    db.adminUsers = db.adminUsers.filter(x => x.id !== uid_); Storage.save(db); Toast.show("Eliminado", "ok"); this.render();
+  },
+
+  startEditAdmin(uid_) {
+    const u = db.adminUsers.find(x => x.id === uid_);
+    if (!u) return;
+    this.editAdminId = uid_;
+    document.getElementById("u_nome").value = u.nome;
+    document.getElementById("u_user").value = u.username;
+    document.getElementById("u_pass").value = "";
+    document.getElementById("u_role").value = u.role;
+    document.getElementById("u_editId").value = uid_;
+    document.getElementById("btnCreateAdminUser").classList.add("hidden");
+    document.getElementById("btnUpdateAdminUser").classList.remove("hidden");
+    document.getElementById("btnCancelEditAdminUser").classList.remove("hidden");
+    document.getElementById("formUsuarioTitle").innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Editar Utilizador';
+  },
+
+  saveEditAdmin() {
+    const id = this.editAdminId;
+    if (!id) return;
+    const u = db.adminUsers.find(x => x.id === id);
+    if (!u) return;
+    const nome = document.getElementById("u_nome").value.trim();
+    const pass = document.getElementById("u_pass").value.trim();
+    const role = document.getElementById("u_role").value;
+    if (!nome) return Toast.show("Nome obrigatório", "bad");
+    u.nome = nome;
+    u.role = role;
+    if (pass.length >= 4) u.password = pass;
+    Storage.save(db);
+    Auditoria.log("EDITAR", "ADMIN_USER", u.id, { nome, role });
+    Toast.show("Utilizador atualizado!", "ok");
+    this.cancelEditAdmin();
+    this.render();
+  },
+
+  cancelEditAdmin() {
+    this.editAdminId = null;
+    ["u_nome", "u_user", "u_pass"].forEach(id => document.getElementById(id).value = "");
+    document.getElementById("u_editId").value = "";
+    document.getElementById("btnCreateAdminUser").classList.remove("hidden");
+    document.getElementById("btnUpdateAdminUser").classList.add("hidden");
+    document.getElementById("btnCancelEditAdminUser").classList.add("hidden");
+    document.getElementById("formUsuarioTitle").innerHTML = 'Novo Utilizador Administrativo';
+  },
+
+  populateClientWithoutUserSelect() {
+    const sel = document.getElementById("selClientWithoutUser");
+    if (!sel) return;
+    const existingClientIds = new Set(db.clientUsers.map(cu => cu.clienteId));
+    const clientsWithoutUser = db.clientes.filter(c => !existingClientIds.has(c.id));
+    sel.innerHTML = clientsWithoutUser.length ? clientsWithoutUser.map(c => `<option value="${c.id}">${escapeHtml(c.nome)} (${escapeHtml(c.telefone || "sem tel")})</option>`).join("") : `<option value="">Todos os clientes possuem acesso</option>`;
+  },
+
+  createClientAccessFromSelect() {
+    const sel = document.getElementById("selClientWithoutUser");
+    const clienteId = sel.value;
+    if (!clienteId) return Toast.show("Selecione um cliente", "bad");
+    const cliente = db.clientes.find(c => c.id === clienteId);
+    if (!cliente) return;
+    if (db.clientUsers.some(cu => cu.clienteId === clienteId)) {
+      Toast.show("Este cliente já possui acesso.", "bad");
+      this.populateClientWithoutUserSelect();
+      return;
+    }
+    const cu = this.generateClientUser(cliente);
+    Auditoria.log("CRIAR ACESSO", "CLIENT_USER", cu.id, { username: cu.username, cliente: cliente.nome });
+    Toast.show(`Acesso criado: ${cu.username} / ${cu.password}`, "ok");
+    document.getElementById("credClientUser").textContent = cu.username;
+    document.getElementById("credClientPass").textContent = cu.password;
+    document.getElementById("clientAccessCredBox").style.display = "block";
+    this._lastGeneratedClientCreds = { username: cu.username, password: cu.password, telefone: cliente.telefone };
+    this.populateClientWithoutUserSelect();
+    this.render();
+  },
+
+  shareClientCreds() {
+    const creds = this._lastGeneratedClientCreds;
+    if (!creds) return Toast.show("Nenhuma credencial gerada", "bad");
+    const tel = (creds.telefone || "").replace(/[^\d]/g, "");
+    const msg = `*PONTO A PONTO LOGÍSTICA*\n\nOlá! Aqui estão as suas credenciais de acesso à plataforma:\n\n👤 Utilizador: *${creds.username}*\n🔑 Senha: *${creds.password}*\n\nAceda em: pontoapontologistica.com\n\nAltere a senha no primeiro acesso.`;
+    if (tel) {
+      window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, "_blank");
+    } else {
+      navigator.clipboard.writeText(msg);
+      Toast.show("Texto copiado! Cole no WhatsApp.", "ok");
+    }
+  },
+
+  render() {
+    const t1 = document.getElementById("tblAdminUsers");
+    if (t1) t1.innerHTML = `<thead><tr><th>Utilizador</th><th>Nome</th><th>Perfil</th><th>Estado</th><th></th></tr></thead><tbody>${db.adminUsers.map(u => `<tr><td><b style="color:#fff">${escapeHtml(u.username)}</b></td><td>${escapeHtml(u.nome)}</td><td><span class="role-badge role-${u.role}">${ROLES[u.role]?.label || u.role}</span></td><td>${u.active ? '<span class="pill ok">Activo</span>' : '<span class="pill bad">Inactivo</span>'}</td><td class="flex" style="justify-content:flex-end"><button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="Users.startEditAdmin('${u.id}')"><i class="fa-solid fa-pen-to-square"></i></button>${u.username !== 'admin' ? `<button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="Users.toggleAdmin('${u.id}')">${u.active ? '<i class="fa-solid fa-pause"></i>' : '<i class="fa-solid fa-play"></i>'}</button><button class="btn danger" style="padding:4px 10px;font-size:11px" onclick="Users.deleteAdmin('${u.id}')"><i class="fa-solid fa-trash"></i></button>` : ''}</td></tr>`).join("")}</tbody>`;
+    const t2 = document.getElementById("tblClientUsers");
+    if (t2) t2.innerHTML = `<thead><tr><th>Código</th><th>Cliente</th><th>Senha</th><th>Estado</th><th></th></tr></thead><tbody>${db.clientUsers.map(cu => { const c = db.clientes.find(x => x.id === cu.clienteId); return `<tr><td><b style="color:var(--brand-orange)">${escapeHtml(cu.username)}</b></td><td>${escapeHtml(c?.nome || "-")}<div class="muted">${escapeHtml(c?.telefone || "")}</div></td><td class="muted">${cu.mustChangePassword ? `<span style="color:var(--warning)">${escapeHtml(cu.password)}</span>` : '••••••'}</td><td>${cu.active ? '<span class="pill ok">Activo</span>' : '<span class="pill bad">Inactivo</span>'}</td><td><button class="btn secondary" style="padding:4px 10px;font-size:11px" onclick="Users.resetClientPassword('${cu.id}')"><i class="fa-solid fa-rotate"></i> Reset</button></td></tr>`; }).join("") || `<tr><td colspan="5"><div class="empty-state"><div class="message">Nenhum cliente com conta</div></div></td></tr>`}</tbody>`;
+    this.populateClientWithoutUserSelect();
+  }
+};
+
+// ========== CLIENTES ==========
+const Clientes = {
+  add() {
+    const nome = document.getElementById("c_nome").value.trim();
+    const telefone = document.getElementById("c_tel").value.trim();
+    if (!nome) return Toast.show("Nome é obrigatório", "bad");
+    const c = { id: uid(), nome, telefone, cidade: document.getElementById("c_cidade").value.trim(), endereco: document.getElementById("c_end").value.trim(), obs: document.getElementById("c_obs").value.trim(), criadoEm: now() };
+    db.clientes.unshift(c); Storage.save(db);
+    const cu = Users.generateClientUser(c);
+    Auditoria.log("CRIAR", "CLIENTE", c.id, { nome, username: cu.username });
+    Toast.show("Cliente registado!", "ok");
+    document.getElementById("credUser").textContent = cu.username;
+    document.getElementById("credPass").textContent = cu.password;
+    document.getElementById("credenciaisBox").style.display = "block";
+    document.getElementById("credenciaisBox")._tel = telefone;
+    document.getElementById("credenciaisBox")._user = cu.username;
+    document.getElementById("credenciaisBox")._pass = cu.password;
+    ["c_nome", "c_tel", "c_cidade", "c_end", "c_obs"].forEach(id => document.getElementById(id).value = "");
+    App.refreshAll("clientes"); App.fillSelects();
+  },
+  shareCredentials() {
+    const box = document.getElementById("credenciaisBox");
+    const tel = (box._tel || "").replace(/[^\d]/g, "");
+    const msg = `*PONTO A PONTO LOGÍSTICA*\n\nOlá! Aqui estão as suas credenciais de acesso à plataforma:\n\n👤 Utilizador: *${box._user}*\n🔑 Senha: *${box._pass}*\n\nAceda em: pontoapontologistica.com\n\nAltere a senha no primeiro acesso.`;
+    if (tel) { window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, "_blank"); } else { navigator.clipboard.writeText(msg); Toast.show("Texto copiado! Cole no WhatsApp.", "ok"); }
+  },
+  edit(id) { const c = db.clientes.find(x => x.id === id); if (!c) return; document.getElementById("c_nome").value = c.nome; document.getElementById("c_tel").value = c.telefone || ""; document.getElementById("c_cidade").value = c.cidade || ""; document.getElementById("c_end").value = c.endereco || ""; document.getElementById("c_obs").value = c.obs || ""; document.getElementById("c_editId").value = id; document.getElementById("btnUpdateCliente").classList.remove("hidden"); document.getElementById("btnCancelEditCliente").classList.remove("hidden"); document.getElementById("btnGuardarCliente").classList.add("hidden"); },
+  cancelEdit() { ["c_nome", "c_tel", "c_cidade", "c_end", "c_obs"].forEach(id => document.getElementById(id).value = ""); document.getElementById("c_editId").value = ""; document.getElementById("btnUpdateCliente").classList.add("hidden"); document.getElementById("btnCancelEditCliente").classList.add("hidden"); document.getElementById("btnGuardarCliente").classList.remove("hidden"); document.getElementById("credenciaisBox").style.display = "none"; },
+  update() { const id = document.getElementById("c_editId").value; const idx = db.clientes.findIndex(c => c.id === id); if (idx === -1) return; const nome = document.getElementById("c_nome").value.trim(); if (!nome) return Toast.show("Nome obrigatório", "bad"); db.clientes[idx] = { ...db.clientes[idx], nome, telefone: document.getElementById("c_tel").value.trim(), cidade: document.getElementById("c_cidade").value.trim(), endereco: document.getElementById("c_end").value.trim(), obs: document.getElementById("c_obs").value.trim() }; Storage.save(db); Toast.show("Atualizado", "ok"); this.cancelEdit(); App.refreshAll("clientes"); App.fillSelects(); },
+  del(id) { if (db.pedidos.some(p => p.clienteId === id)) return Toast.show("Cliente tem pedidos", "bad"); if (!confirm("Eliminar?")) return; db.clientes = db.clientes.filter(c => c.id !== id); db.clientUsers = db.clientUsers.filter(cu => cu.clienteId !== id); Storage.save(db); Toast.show("Eliminado", "ok"); App.refreshAll("clientes"); App.fillSelects(); },
+  render() {
+    const q = (document.getElementById("c_search")?.value || "").toLowerCase();
+    const filtered = q ? db.clientes.filter(c => (c.nome || "").toLowerCase().includes(q) || (c.telefone || "").includes(q)) : db.clientes;
+    const t = document.getElementById("tblClientes");
+    const cu_map = {}; db.clientUsers.forEach(cu => { cu_map[cu.clienteId] = cu; });
+    if (!filtered.length) { t.innerHTML = `<tbody><tr><td colspan="5"><div class="empty-state"><div class="icon"><i class="fa-solid fa-users-slash"></i></div><div class="message">Nenhum cliente</div></div></td></tr></tbody>`; return; }
+    t.innerHTML = `<thead><tr><th>Nome</th><th>Contacto</th><th>Login</th><th>Localização</th><th></th></tr></thead><tbody>${filtered.map(c => { const cu = cu_map[c.id]; return `<tr><td><b style="color:#fff">${escapeHtml(c.nome)}</b><div class="muted" style="font-size:11px">${escapeHtml(c.obs || "")}</div></td><td>${escapeHtml(c.telefone || "-")}</td><td>${cu ? `<span class="pill info">${escapeHtml(cu.username)}</span>` : '<span class="muted">—</span>'}</td><td>${escapeHtml(c.cidade || "-")}</td><td class="flex">${Perm.canCreate() ? `<button class="btn secondary" style="padding:6px 10px;font-size:12px" onclick="Clientes.edit('${c.id}')"><i class="fa-solid fa-pen-to-square"></i></button>` : ''}${Perm.canDelete() ? `<button class="btn danger" style="padding:6px 12px" onclick="Clientes.del('${c.id}')"><i class="fa-solid fa-trash"></i></button>` : ''}</td></tr>`; }).join("")}</tbody>`;
+  }
+};
+
+// ========== PEDIDOS UI ==========
+const PedidosUI = {
+  draftItens: [], editMode: false, editPedidoId: null,
+  getModalidade() { return document.getElementById("p_mod")?.value || "indef"; },
+  medidaTipo(mod) { return mod === "aereo" ? "kg" : "cbm"; },
+  onModalidadeChange() { const m = this.getModalidade(); const t = this.medidaTipo(m); const l = document.getElementById("i_medida_label"); const h = document.getElementById("i_medida_help"); if (t === "kg") { l.textContent = "Peso (KG)"; h.textContent = "Peso por unidade"; } else { l.textContent = "Volume (CBM m³)"; h.textContent = "CBM por unidade"; } },
+  async addItemToDraft() {
+    const desc = document.getElementById("i_desc").value.trim(); const qtd = Number(document.getElementById("i_qtd").value || 1); const precoUnit = Number(document.getElementById("i_preco").value || 0); const medidaValor = Number(document.getElementById("i_medida").value || 0);
+    if (!desc) return Toast.show("Descreva o produto", "bad");
+    if (precoUnit < Number(db.config.minPreco)) return Toast.show(`Preço mínimo: ${db.config.minPreco} MZN`, "bad");
+    let imagem = ""; const imgFile = document.getElementById("i_img").files[0];
+    if (imgFile) { if (imgFile.size > 1200000) return Toast.show("Imagem >1.2MB", "bad"); imagem = await new Promise((r, j) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.onerror = j; fr.readAsDataURL(imgFile); }); }
+    this.draftItens.push({ id: uid(), desc, link: document.getElementById("i_link").value.trim(), imagem, qtd, precoUnit, medidaTipo: this.medidaTipo(this.getModalidade()), medidaValor, arrivedChina: false, arrivedAt: null });
+    ["i_desc", "i_link", "i_medida", "i_preco"].forEach(id => document.getElementById(id).value = ""); document.getElementById("i_qtd").value = 1; document.getElementById("i_img").value = "";
+    this.renderDraft(); Toast.show("Item adicionado", "ok");
+  },
+  removeDraftItem(id) { this.draftItens = this.draftItens.filter(x => x.id !== id); this.renderDraft(); },
+  renderDraft() {
+    const el = document.getElementById("draftItens"); document.getElementById("contadorItens").textContent = `(${this.draftItens.length})`;
+    if (!this.draftItens.length) { el.innerHTML = '<div class="empty-state"><div class="icon"><i class="fa-solid fa-box-open"></i></div><div class="message">Nenhum item</div></div>'; el.style.cssText = "min-height:60px;border:2px dashed rgba(255,122,24,.3);border-radius:12px;padding:16px;text-align:center"; document.getElementById("p_total_produtos").value = ""; return; }
+    const total = this.draftItens.reduce((a, it) => a + it.qtd * it.precoUnit, 0); document.getElementById("p_total_produtos").value = money(total);
+    el.style.cssText = "display:grid;gap:12px";
+    el.innerHTML = this.draftItens.map(it => `<div class="itemCard"><div class="flex" style="justify-content:space-between;align-items:flex-start"><div style="flex:1"><div style="font-weight:600;color:#fff">${escapeHtml(it.desc)}</div><div class="muted">Qtd: ${it.qtd} | Unit: ${money(it.precoUnit)} | Sub: <b style="color:var(--brand-orange)">${money(it.qtd * it.precoUnit)}</b></div>${it.imagem ? `<img class="imgPrev" src="${it.imagem}" style="max-height:80px;width:auto;margin-top:4px"/>` : ""}</div><button class="btn danger" onclick="PedidosUI.removeDraftItem('${it.id}')" style="padding:6px 12px;font-size:12px"><i class="fa-solid fa-xmark"></i></button></div></div>`).join("");
+  },
+  resetDraft() { this.draftItens = []; this.renderDraft(); document.getElementById("p_obs").value = ""; document.getElementById("p_envio").value = ""; document.getElementById("p_mod").value = "indef"; this.onModalidadeChange(); },
+  loadForEdit(pid) {
+    const p = db.pedidos.find(x => x.id === pid); if (!p) return;
+    this.editMode = true; this.editPedidoId = pid;
+    document.getElementById("p_cliente").value = p.clienteId || ""; document.getElementById("p_status").value = p.status || STATUS[0]; document.getElementById("p_mod").value = p.modalidade || "indef"; this.onModalidadeChange(); document.getElementById("p_obs").value = p.obs || ""; document.getElementById("p_envio").value = p.envioEstimado || 0; document.getElementById("p_cambio").value = p.cambio || db.config.cambio;
+    this.draftItens = JSON.parse(JSON.stringify(p.itens || [])); this.renderDraft();
+    document.getElementById("btnCreatePedido").classList.add("hidden"); document.getElementById("btnUpdatePedido").classList.remove("hidden"); document.getElementById("btnCancelEditPedido").classList.remove("hidden");
+    Nav.goto("pedidos"); document.getElementById("formTitulo").innerHTML = `<i class="fa-solid fa-pen-to-square" style="color:var(--success)"></i> Editando: ${p.codigo}`;
+  },
+  cancelEdit() {
+    this.editMode = false; this.editPedidoId = null; this.resetDraft();
+    document.getElementById("p_cliente").value = ""; document.getElementById("p_status").value = STATUS[0]; document.getElementById("p_cambio").value = db.config.cambio;
+    document.getElementById("btnCreatePedido").classList.remove("hidden"); document.getElementById("btnUpdatePedido").classList.add("hidden"); document.getElementById("btnCancelEditPedido").classList.add("hidden");
+    document.getElementById("formTitulo").innerHTML = "Novo Pedido"; document.getElementById("formTitulo").style.color = "#fff";
+  }
+};
+
+// ========== PEDIDOS ==========
+const Pedidos = {
+  page: 1, pageSize: 10, searchTimer: null,
+  bind() { document.getElementById("p_search").addEventListener("input", () => { clearTimeout(this.searchTimer); this.searchTimer = setTimeout(() => { this.page = 1; this.renderList(); }, 250); }); document.getElementById("p_filter_status").addEventListener("change", () => { this.page = 1; this.renderList(); }); },
+  nextCodigo() { const y = new Date().getFullYear(); const n = Number(db.config.nextPedidoNumber || 1); const c = `PED-${y}-${String(n).padStart(5, "0")}`; db.config.nextPedidoNumber = n + 1; Storage.save(db); return c; },
+  createFromDraft() {
+    const clienteId = document.getElementById("p_cliente").value; if (!clienteId) return Toast.show("Selecione cliente", "bad");
+    if (!PedidosUI.draftItens.length) return Toast.show("Adicione produtos", "bad");
+    const envio = Number(document.getElementById("p_envio").value || 0); const cambio = Number(document.getElementById("p_cambio").value || db.config.cambio);
+    const status = document.getElementById("p_status").value; const codigo = this.nextCodigo(); const modalidade = document.getElementById("p_mod").value;
+    const p = { id: uid(), codigo, clienteId, status, statusHist: [{ at: now(), status, obs: "Pedido criado" }], modalidade, obs: document.getElementById("p_obs").value.trim(), envioEstimado: envio, cambio, itens: JSON.parse(JSON.stringify(PedidosUI.draftItens)), criadoEm: now(), tracking: null, dataEntrega: null, loteId: null };
+    const tipo = modalidade === "aereo" ? "kg" : "cbm"; p.itens.forEach(it => { it.medidaTipo = tipo; });
+    db.pedidos.unshift(p); Storage.save(db);
+    Auditoria.log("CRIAR", "PEDIDO", p.id, { codigo, itens: p.itens.length });
+    Toast.show(`Pedido ${codigo} criado!`, "ok");
+    WhatsAppService.promptNotify(p, status);
+    PedidosUI.resetDraft(); App.fillSelects(); App.refreshAll("pedidos");
+  },
+  updateFromDraft() {
+    if (!PedidosUI.editMode) return;
+    const p = db.pedidos.find(x => x.id === PedidosUI.editPedidoId); if (!p) return;
+    const clienteId = document.getElementById("p_cliente").value; if (!clienteId) return Toast.show("Selecione cliente", "bad");
+    if (!PedidosUI.draftItens.length) return Toast.show("Precisa de itens", "bad");
+    const oldStatus = p.status; const newStatus = document.getElementById("p_status").value;
+    p.clienteId = clienteId; p.status = newStatus; p.modalidade = document.getElementById("p_mod").value; p.obs = document.getElementById("p_obs").value.trim(); p.envioEstimado = Number(document.getElementById("p_envio").value || 0); p.cambio = Number(document.getElementById("p_cambio").value || db.config.cambio);
+    const oldMap = {}; (p.itens || []).forEach(it => { oldMap[it.id] = it; }); p.itens = JSON.parse(JSON.stringify(PedidosUI.draftItens));
+    const tipo = p.modalidade === "aereo" ? "kg" : "cbm"; p.itens.forEach(it => { it.medidaTipo = tipo; if (oldMap[it.id]) { it.arrivedChina = oldMap[it.id].arrivedChina; it.arrivedAt = oldMap[it.id].arrivedAt; } });
+    if (oldStatus !== newStatus) { p.statusHist = p.statusHist || []; p.statusHist.push({ at: now(), status: newStatus, obs: "Editado" }); WhatsAppService.promptNotify(p, newStatus); }
+    if (newStatus === "Entregue" && !p.dataEntrega) p.dataEntrega = now();
+    if (newStatus === STATUS[5] && !p.tracking) {
+      p.tracking = {
+        etapaAtual: 1,
+        etapas: [
+          { id: 1, titulo: "Foi preparada e carregada no contentor/navio", data: "", concluido: false },
+          { id: 2, titulo: "Chegada prevista ao Porto de Maputo", data: "", concluido: false },
+          { id: 3, titulo: "Chegada prevista ao Armazém da Matola", data: "", concluido: false }
+        ]
+      };
+    }
+    Storage.save(db); Auditoria.log("EDITAR", "PEDIDO", p.id, { codigo: p.codigo });
+    Toast.show(`${p.codigo} atualizado!`, "ok"); PedidosUI.cancelEdit(); App.fillSelects(); App.refreshAll("pedidos"); this.show(p.id);
+  },
+  changeStatus(pid, newStatus) {
+    const p = db.pedidos.find(x => x.id === pid); if (!p) return;
+    const old = p.status; p.status = newStatus; p.statusHist = p.statusHist || []; p.statusHist.push({ at: now(), status: newStatus, obs: "" });
+    if (newStatus === "Entregue" && !p.dataEntrega) p.dataEntrega = now();
+    if (newStatus === STATUS[5] && !p.tracking) {
+      p.tracking = {
+        etapaAtual: 1,
+        etapas: [
+          { id: 1, titulo: "Foi preparada e carregada no contentor/navio", data: "", concluido: false },
+          { id: 2, titulo: "Chegada prevista ao Porto de Maputo", data: "", concluido: false },
+          { id: 3, titulo: "Chegada prevista ao Armazém da Matola", data: "", concluido: false }
+        ]
+      };
+    }
+    Storage.save(db); Auditoria.log("STATUS", "PEDIDO", pid, { de: old, para: newStatus });
+    Toast.show(`Status: ${newStatus}`, "ok");
+    WhatsAppService.promptNotify(p, newStatus);
+    App.refreshAll("pedidos"); this.show(pid);
+  },
+  del(pid) { const p = db.pedidos.find(x => x.id === pid); if (!p) return; if (!Perm.canDelete()) return Toast.show("Sem permissão", "bad"); if (!confirm(`Eliminar ${p.codigo}?`)) return; db.rastreios = db.rastreios.filter(r => r.pedidoId !== pid); db.loteItens = db.loteItens.filter(li => li.pedidoId !== pid); db.pedidos = db.pedidos.filter(x => x.id !== pid); Storage.save(db); Toast.show("Eliminado", "ok"); document.getElementById("pedidoDetalhe").classList.add("hidden"); App.refreshAll("pedidos"); },
+  pill(s) { const l = (s || "").toLowerCase(); if (l.includes("entregue")) return `<span class="pill ok">Entregue</span>`; if (l.includes("cancel") || l.includes("problema")) return `<span class="pill bad">Problema</span>`; if (l.includes("trânsito")) return `<span class="pill warn">Em Trânsito</span>`; if (l.includes("pago")) return `<span class="pill info">Pago</span>`; return `<span class="pill">${escapeHtml(s)}</span>`; },
+  show(id) {
+    const p = db.pedidos.find(x => x.id === id); if (!p) return; const c = db.clientes.find(x => x.id === p.clienteId);
+    const box = document.getElementById("pedidoDetalhe"); box.classList.remove("hidden");
+    const saldo = Calc.saldo(p); const total = Calc.expectedTotal(p); const pago = Calc.entradas(p.id);
+    const totalProdutos = Calc.totalProdutos(p);
+    const envio = Number(p.envioEstimado || 0);
+    const itensHTML = (p.itens || []).map(it => {
+      const medida = it.medidaTipo ? `${Number(it.medidaValor || 0).toFixed(it.medidaTipo === 'kg' ? 2 : 4)} ${it.medidaTipo.toUpperCase()}` : '';
+      const china = it.arrivedChina ? '<span class="pill ok">Sim</span>' : '<span class="pill warn">Não</span>';
+      return `<div style="border:1px solid rgba(255,122,24,.2);border-radius:12px;padding:12px;margin-bottom:8px;background:rgba(0,0,0,.2)"><b style="color:#fff">${escapeHtml(it.desc)}</b><div class="muted">Qtd: ${it.qtd} | ${money(it.precoUnit)} | Sub: <b style="color:var(--brand-orange)">${money(it.qtd * it.precoUnit)}</b>${medida ? ` | ${medida}` : ''}</div><div class="muted" style="font-size:11px">China: ${china}</div>${it.imagem ? `<img src="${it.imagem}" style="max-height:80px;border-radius:8px;margin-top:4px"/>` : ""}</div>`;
+    }).join("");
+    const histHTML = (p.statusHist || []).slice().reverse().map(h => `<div class="muted" style="font-size:11px;margin-bottom:4px"><b>${fmtDate(h.at)}</b>: ${escapeHtml(h.status)}</div>`).join("");
+
+    let trackingAdminHTML = "";
+    if (p.tracking && p.tracking.etapas) {
+      trackingAdminHTML = `<div class="hr"></div><h2 style="color:var(--brand-orange)">Rastreamento da Encomenda</h2><div id="adminTracking">${p.tracking.etapas.map((e, index) => `
+        <div style="margin-bottom:15px;padding:10px;border:1px solid rgba(255,255,255,.15);border-radius:8px;background:rgba(0,0,0,.2)">
+          <b style="color:#fff">${escapeHtml(e.titulo)}</b>
+          <br><br>
+          <input type="datetime-local" value="${e.data || ''}" onchange="TrackingManager.alterarDataEtapa('${p.id}',${index},this.value)" style="width:auto;display:inline-block">
+          <label style="margin-left:10px;color:var(--text);cursor:pointer">
+            <input type="checkbox" ${e.concluido ? 'checked' : ''} onchange="TrackingManager.concluirEtapa('${p.id}',${index},this.checked)"> Concluído
+          </label>
+        </div>
+      `).join("")}</div>`;
+    }
+
+    box.innerHTML = `<div class="card" style="margin-top:16px;border-color:rgba(255,122,24,.3)"><div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:16px"><div><h2 style="margin:0">${escapeHtml(p.codigo)}</h2><div class="muted">${escapeHtml(c?.nome || "")} | ${escapeHtml(c?.telefone || "")}</div></div><div class="flex" style="gap:8px"><button class="btn orange" onclick="Recibo.open('${p.id}')"><i class="fa-solid fa-receipt"></i> Recibo</button><button class="btn wa" onclick="WhatsAppService.promptNotify(db.pedidos.find(x=>x.id==='${p.id}'),db.pedidos.find(x=>x.id==='${p.id}').status)"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>${Perm.canCreate() ? `<button class="btn" style="background:var(--brand-sky)" onclick="PedidosUI.loadForEdit('${p.id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>` : ''}${Perm.canDelete() ? `<button class="btn danger" onclick="Pedidos.del('${p.id}')"><i class="fa-solid fa-trash"></i></button>` : ''}</div></div>
+    <div class="row" style="margin-bottom:16px"><div><label>Alterar status:</label><select id="ss_${p.id}">${STATUS.map(s => `<option value="${s}" ${s === p.status ? "selected" : ""}>${s}</option>`).join("")}</select></div><div style="display:flex;align-items:flex-end"><button class="btn" onclick="Pedidos.changeStatus('${p.id}',document.getElementById('ss_${p.id}').value)">Atualizar</button></div></div>
+    <div class="row3" style="margin-bottom:16px"><div class="card" style="background:rgba(0,0,0,.2);padding:12px"><div class="muted" style="font-size:11px">TOTAL PRODUTOS</div><div style="font-size:20px;font-weight:800;color:#fff">${money(totalProdutos)}</div></div><div class="card" style="background:rgba(0,0,0,.2);padding:12px"><div class="muted" style="font-size:11px">ENVIO (TAXA)</div><div style="font-size:20px;font-weight:800;color:var(--brand-sky)">${money(envio)}</div></div><div class="card" style="background:rgba(255,122,24,.1);padding:12px"><div class="muted" style="font-size:11px">SALDO (A PAGAR)</div><div style="font-size:20px;font-weight:800;color:${saldo > 0 ? "var(--danger)" : "var(--success)"}">${money(saldo)}</div></div></div>
+    <div class="hr"></div><h2 style="color:var(--brand-orange)">Itens</h2>${itensHTML || '<div class="muted">Sem itens</div>'}
+    ${trackingAdminHTML}
+    <div class="hr"></div><h2>Histórico</h2>${histHTML || '<div class="muted">Sem histórico</div>'}</div>`;
+  },
+  filterRows() { const q = (document.getElementById("p_search").value || "").toLowerCase(); const st = document.getElementById("p_filter_status").value; return db.pedidos.filter(p => { const c = db.clientes.find(x => x.id === p.clienteId); const blob = `${p.codigo} ${p.status} ${c?.nome || ""}`.toLowerCase(); return (!q || blob.includes(q)) && (!st || p.status === st); }); },
+  renderList() {
+    const t = document.getElementById("tblPedidos"); const rows = this.filterRows(); const tp = Math.max(1, Math.ceil(rows.length / this.pageSize)); if (this.page > tp) this.page = tp;
+    const start = (this.page - 1) * this.pageSize; const slice = rows.slice(start, start + this.pageSize);
+    document.getElementById("pageInfo").textContent = `Pág. ${this.page}/${tp} (${rows.length})`;
+    if (!rows.length) { t.innerHTML = `<tbody><tr><td colspan="7"><div class="empty-state"><div class="icon"><i class="fa-solid fa-box-open"></i></div><div class="message">Nenhum pedido</div></div></td></tr></tbody>`; App.updateBadges(); return; }
+    t.innerHTML = `<thead><tr><th>Código</th><th>Cliente</th><th>Itens</th><th>Status</th><th style="text-align:right">Total</th><th style="text-align:right">Saldo</th><th></th></tr></thead><tbody>${slice.map(p => { const c = db.clientes.find(x => x.id === p.clienteId); return `<tr style="cursor:pointer" onclick="Pedidos.show('${p.id}')"><td><b style="color:#fff">${escapeHtml(p.codigo)}</b></td><td>${escapeHtml(c?.nome || "-")}</td><td>${(p.itens || []).length}</td><td>${this.pill(p.status)}</td><td style="text-align:right">${money(Calc.expectedTotal(p))}</td><td style="text-align:right;color:${Calc.saldo(p) > 0 ? "var(--danger)" : "var(--success)"}">${money(Calc.saldo(p))}</td><td style="text-align:right"><button class="btn orange" style="padding:4px 12px;font-size:11px" onclick="event.stopPropagation();Recibo.open('${p.id}')"><i class="fa-solid fa-receipt"></i></button></td></tr>`; }).join("")}</tbody>`; App.updateBadges();
+  },
+  prevPage() { this.page = Math.max(1, this.page - 1); this.renderList(); },
+  nextPage() { const tp = Math.max(1, Math.ceil(this.filterRows().length / this.pageSize)); this.page = Math.min(tp, this.page + 1); this.renderList(); }
+};
+
+// ========== TRACKING MANAGER ==========
+const TrackingManager = {
+  alterarDataEtapa(pedidoId, index, data) {
+    const pedido = db.pedidos.find(p => p.id === pedidoId);
+    if (!pedido || !pedido.tracking) return;
+    pedido.tracking.etapas[index].data = data;
+    Storage.save(db);
+    Pedidos.show(pedidoId);
+  },
+  concluirEtapa(pedidoId, index, status) {
+    const pedido = db.pedidos.find(p => p.id === pedidoId);
+    if (!pedido || !pedido.tracking) return;
+    pedido.tracking.etapas[index].concluido = status;
+    if (status) {
+      pedido.tracking.etapaAtual = index + 1;
+    } else {
+      const ultimaConcluida = pedido.tracking.etapas.findLastIndex(e => e.concluido);
+      pedido.tracking.etapaAtual = ultimaConcluida >= 0 ? ultimaConcluida + 1 : 1;
+    }
+    Storage.save(db);
+    Pedidos.show(pedidoId);
+  },
+  renderCliente(pedido) {
+    if (!pedido.tracking || !pedido.tracking.etapas) return '';
+    return pedido.tracking.etapas.map(etapa => `
+      <div class="track-row">
+        <div class="track-dot ${etapa.concluido ? 'done' : 'pending'}">${etapa.concluido ? '✓' : '○'}</div>
+        <div class="info">
+          <strong>${escapeHtml(etapa.titulo)}</strong>
+          <br>
+          <small>${etapa.data ? fmtDate(new Date(etapa.data).getTime()) : 'Aguardando actualização'}</small>
+        </div>
+      </div>
+    `).join("");
+  }
+};
+
+// ========== WAREHOUSE (ARMAZÉM) ==========
+const Warehouse = {
+  setArrived(pid, iid, arrived) { const p = db.pedidos.find(x => x.id === pid); if (!p) return; const it = (p.itens || []).find(x => x.id === iid); if (!it) return; it.arrivedChina = !!arrived; it.arrivedAt = arrived ? now() : null; Storage.save(db); Toast.show(arrived ? "Chegada confirmada" : "Desmarcado", "ok"); this.render(true); },
+  addTracking(pid, iid) { const tipo = prompt("Tipo (vendedor/agencia/local):", "vendedor"); if (!tipo) return; const codigo = prompt("Código rastreio:"); if (!codigo) return; db.rastreios.unshift({ id: uid(), pedidoId: pid, itemId: iid, tipo, codigo, criadoEm: now() }); Storage.save(db); Toast.show("Rastreio adicionado", "ok"); this.render(true); },
+  delTracking(rid) { db.rastreios = db.rastreios.filter(r => r.id !== rid); Storage.save(db); this.render(true); },
+  exportXLSX() { if (typeof XLSX === "undefined") return Toast.show("XLSX não carregou", "bad"); const data = [["Pedido", "Cliente", "Telefone", "Produto", "Qtd", "Chegou_China", "Rastreios"]]; db.pedidos.forEach(p => { const c = db.clientes.find(x => x.id === p.clienteId); (p.itens || []).forEach(it => { const rast = db.rastreios.filter(r => r.pedidoId === p.id && r.itemId === it.id).map(r => `${r.tipo}:${r.codigo}`).join("|"); data.push([p.codigo, c?.nome || "", c?.telefone || "", it.desc, it.qtd, it.arrivedChina ? "SIM" : "NAO", rast]); }); }); const ws = XLSX.utils.aoa_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Armazem"); XLSX.writeFile(wb, `armazem_${new Date().toISOString().slice(0, 10)}.xlsx`); Toast.show("Excel exportado", "ok"); },
+
+  // Atualiza os cards de resumo (apenas pedidos sem lote)
+  atualizarResumo() {
+    const pedidosRecentes = db.pedidos.filter(p => !p.loteId && p.status !== "Entregue");
+    let totalProdutos = 0;
+    pedidosRecentes.forEach(p => {
+      (p.itens || []).forEach(item => {
+        if (item.arrivedChina === true) {
+          totalProdutos += Number(item.qtd || 0);
+        }
+      });
+    });
+    const totalTrackings = db.rastreios.filter(r => pedidosRecentes.some(p => p.id === r.pedidoId)).length;
+    const totalClientes = new Set(pedidosRecentes.map(p => p.clienteId)).size;
+    document.getElementById("totalProdutos").textContent = totalProdutos;
+    document.getElementById("totalTrackings").textContent = totalTrackings;
+    document.getElementById("totalClientes").textContent = totalClientes;
+  },
+
+  render(force = false) {
+    const termo = (document.getElementById("w_search")?.value || "").toLowerCase().trim();
+    const filter = document.getElementById("w_filter")?.value || "all";
+    const t = document.getElementById("tblWarehouse");
+    const lotesDiv = document.getElementById("lotesNoArmazem");
+
+    // ===== SECÇÃO 1: NOVOS PRODUTOS (pedidos sem lote) =====
+    const pedidosRecentes = db.pedidos.filter(p => !p.loteId && p.status !== "Entregue");
+
+    const rows = [];
+    pedidosRecentes.forEach(p => {
+      const c = db.clientes.find(x => x.id === p.clienteId);
+      (p.itens || []).forEach(it => {
+        if (filter === "arrived" && !it.arrivedChina) return;
+        if (filter === "not_arrived" && it.arrivedChina) return;
+        if (termo) {
+          const codigoPedido = (p.codigo || "").toLowerCase();
+          const nomeCliente = (c?.nome || "").toLowerCase();
+          const telefoneCliente = (c?.telefone || "").toLowerCase();
+          const descItem = (it.desc || "").toLowerCase();
+          const trackingItem = db.rastreios.filter(r => r.pedidoId === p.id && r.itemId === it.id).map(r => (r.codigo || "").toLowerCase());
+          const allTracking = db.rastreios.filter(r => r.pedidoId === p.id).map(r => (r.codigo || "").toLowerCase());
+          const match =
+            codigoPedido.includes(termo) ||
+            nomeCliente.includes(termo) ||
+            telefoneCliente.includes(termo) ||
+            descItem.includes(termo) ||
+            trackingItem.some(tc => tc.includes(termo)) ||
+            allTracking.some(tc => tc.includes(termo));
+          if (!match) return;
+        }
+        const rast = db.rastreios.filter(r => r.pedidoId === p.id && r.itemId === it.id);
+        rows.push({ p, c, it, rast });
+      });
+    });
+
+    if (!rows.length) {
+      t.innerHTML = `<tbody><tr><td colspan="7"><div class="empty-state"><div class="message">Nenhum pedido recente encontrado</div></div></td></tr></tbody>`;
+    } else {
+      t.innerHTML = `<thead><tr><th>Pedido</th><th>Cliente</th><th>Produto</th><th>Qtd</th><th>China</th><th>Rastreios</th><th></th></tr></thead><tbody>${rows.map(({ p, c, it, rast }) => `<tr><td><b style="color:#fff">${escapeHtml(p.codigo)}</b></td><td>${escapeHtml(c?.nome || "-")}</td><td><b style="color:#fff">${escapeHtml(it.desc)}</b></td><td>${it.qtd}</td><td><input type="checkbox" ${it.arrivedChina ? "checked" : ""} onchange="Warehouse.setArrived('${p.id}','${it.id}',this.checked)"/>${it.arrivedChina ? `<div class="muted" style="font-size:10px">${fmtDate(it.arrivedAt)}</div>` : ''}</td><td>${rast.length ? rast.map(r => `<div class="muted" style="font-size:11px"><b>${escapeHtml(r.tipo)}:</b> ${escapeHtml(r.codigo)} <span style="cursor:pointer;color:var(--danger)" onclick="Warehouse.delTracking('${r.id}')"><i class="fa-solid fa-xmark"></i></span></div>`).join("") : '<span class="muted">—</span>'}</td><td><button class="btn" style="padding:6px 10px;font-size:12px;background:var(--brand-sky)" onclick="Warehouse.addTracking('${p.id}','${it.id}')"><i class="fa-solid fa-plus"></i> Rastreio</button></td></tr>`).join("")}</tbody>`;
+    }
+
+    // ===== SECÇÃO 2: PEDIDOS AGRUPADOS EM LOTES =====
+    const lotesComPedidos = db.lotes.filter(l => db.loteItens.some(li => li.loteId === l.id));
+    if (!lotesComPedidos.length) {
+      lotesDiv.innerHTML = `<div class="empty-state"><div class="icon"><i class="fa-solid fa-boxes-stacked"></i></div><div class="message">Nenhum lote com pedidos associados</div></div>`;
+    } else {
+      lotesDiv.innerHTML = lotesComPedidos.map(lote => {
+        const itensLote = db.loteItens.filter(li => li.loteId === lote.id);
+        const pedidosIds = itensLote.map(li => li.pedidoId);
+        const pedidosLote = db.pedidos.filter(p => pedidosIds.includes(p.id));
+
+        // Calcular produtos no lote
+        const totalProdutosLote = pedidosLote.reduce((acc, p) => acc + (p.itens || []).reduce((sum, it) => sum + Number(it.qtd || 0), 0), 0);
+        // Calcular rastreios do lote (todos os rastreios cujo pedido pertence ao lote)
+        const totalRastreiosLote = db.rastreios.filter(r => pedidosIds.includes(r.pedidoId)).length;
+
+        const clientes = [...new Set(pedidosLote.map(p => p.clienteId))];
+        const nomesClientes = clientes.map(id => {
+          const cl = db.clientes.find(c => c.id === id);
+          return cl ? cl.nome : "Desconhecido";
+        }).join(", ");
+
+        return `<div class="card" style="margin-bottom:16px; border-color: rgba(255,122,24,.3);">
+          <div class="flex" style="justify-content:space-between; align-items:center;">
+            <div>
+              <h2 style="color:var(--brand-orange); margin:0 0 8px 0;">${escapeHtml(lote.codigo)}</h2>
+              <div class="muted">Produtos: ${totalProdutosLote} | Rastreios: ${totalRastreiosLote}</div>
+              <div class="muted">Clientes: ${nomesClientes || "Nenhum cliente"}</div>
+              <div class="muted">Criado em: ${fmtDate(lote.criadoEm)} | Status: ${lote.tracking ? 'Em trânsito' : 'Aguardando'}</div>
+            </div>
+            <button class="btn secondary" onclick="Nav.goto('lotes');Lotes.show('${lote.id}')"><i class="fa-solid fa-eye"></i> Ver Lote</button>
+          </div>
+          <div class="hr"></div>
+          <div>
+            <b style="color:#fff;">Pedidos incluídos:</b>
+            <div class="flex" style="gap:8px; margin-top:8px;">
+              ${pedidosLote.map(p => `<span class="pill info" style="cursor:pointer" onclick="Nav.goto('pedidos');Pedidos.show('${p.id}')">${escapeHtml(p.codigo)}</span>`).join("")}
+            </div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    this.atualizarResumo();
+  }
+};
+
+// ========== LOTES ==========
+const LotesUI = { onTipoChange() { const t = document.getElementById("l_tipo").value; document.getElementById("l_medida_label").textContent = t === "aereo" ? "KG Total" : "CBM Total"; } };
+const Lotes = {
+  add() { const codigo = document.getElementById("l_codigo").value.trim(); const tipo = document.getElementById("l_tipo").value; const medidaTotal = Number(document.getElementById("l_medida_total").value || 0); const custoTotal = Number(document.getElementById("l_custo_total").value || 0); const tracking = document.getElementById("l_track").value.trim(); if (!codigo || !(medidaTotal > 0) || !(custoTotal > 0)) return Toast.show("Preencha todos os campos", "bad"); db.lotes.unshift({ id: uid(), codigo, tipo, medidaTotal, custoTotal, tracking, criadoEm: now() }); Storage.save(db); Toast.show("Lote criado", "ok"); ["l_codigo", "l_medida_total", "l_custo_total", "l_track"].forEach(id => document.getElementById(id).value = ""); App.refreshAll("lotes"); },
+  del(lid) { if (!confirm("Eliminar lote?")) return; const itensLote = db.loteItens.filter(li => li.loteId === lid);
+    itensLote.forEach(li => {
+      const pedido = db.pedidos.find(p => p.id === li.pedidoId);
+      if (pedido) pedido.loteId = null;
+    });
+    db.loteItens = db.loteItens.filter(li => li.loteId !== lid);
+    db.lotes = db.lotes.filter(l => l.id !== lid);
+    Storage.save(db); Toast.show("Eliminado", "ok"); App.refreshAll("lotes"); },
+  addPedidoToLote(lid) { const sel = document.getElementById("addPed_" + lid); const pid = sel.value; if (!pid) return; const p = db.pedidos.find(x => x.id === pid); if (!p) return; if (p.loteId && p.loteId !== lid) {
+      db.loteItens = db.loteItens.filter(li => !(li.pedidoId === pid && li.loteId === p.loteId));
+    }
+    db.loteItens.push({ id: uid(), loteId: lid, pedidoId: pid, medidaUsada: Calc.totalMedida(p), freteRateado: 0 });
+    p.loteId = lid;
+    Storage.save(db); Toast.show("Adicionado", "ok"); this.show(lid); },
+  removeItem(liid, lid) {
+    const li = db.loteItens.find(x => x.id === liid);
+    if (li) {
+      const pedido = db.pedidos.find(p => p.id === li.pedidoId);
+      if (pedido) pedido.loteId = null;
+    }
+    db.loteItens = db.loteItens.filter(x => x.id !== liid);
+    Storage.save(db); this.show(lid);
+  },
+  ratear(lid) { const lote = db.lotes.find(l => l.id === lid); const itens = db.loteItens.filter(li => li.loteId === lid); if (!itens.length) return Toast.show("Sem pedidos", "bad"); itens.forEach(it => { it.freteRateado = (Number(it.medidaUsada || 0) / Number(lote.medidaTotal)) * Number(lote.custoTotal); const ref = `frete_${lid}`; db.movimentos = db.movimentos.filter(m => !(m.pedidoId === it.pedidoId && m.ref === ref)); db.movimentos.unshift({ id: uid(), tipo: "saida", pedidoId: it.pedidoId, categoria: "frete_agencia", valor: Math.round(it.freteRateado), metodo: "Outro", descricao: `Frete rateado (${lote.codigo})`, ref, data: now() }); }); Storage.save(db); Toast.show("Frete rateado", "ok"); this.show(lid); },
+  render() {
+    const t = document.getElementById("tblLotes"); if (!db.lotes.length) { t.innerHTML = `<tbody><tr><td colspan="6"><div class="empty-state"><div class="icon"><i class="fa-solid fa-truck-fast"></i></div><div class="message">Nenhum lote</div></div></td></tr></tbody>`; return; }
+    t.innerHTML = `<thead><tr><th>Código</th><th>Tipo</th><th>Total</th><th>Custo</th><th>Tracking</th><th></th></tr></thead><tbody>${db.lotes.map(l => `<tr><td><b style="color:#fff">${escapeHtml(l.codigo)}</b></td><td>${l.tipo === "aereo" ? '<span class="pill info">Aéreo</span>' : '<span class="pill warn">Marítimo</span>'}</td><td>${Number(l.medidaTotal).toFixed(l.tipo === "aereo" ? 2 : 4)} ${l.tipo === "aereo" ? "KG" : "CBM"}</td><td>${money(l.custoTotal)}</td><td class="muted">${escapeHtml(l.tracking || "-")}</td><td class="flex" style="justify-content:flex-end"><button class="btn secondary" style="padding:6px 10px;font-size:12px" onclick="Lotes.show('${l.id}')"><i class="fa-solid fa-eye"></i></button><button class="btn danger" style="padding:6px 10px;font-size:12px" onclick="Lotes.del('${l.id}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join("")}</tbody>`;
+  },
+  show(lid) {
+    const lote = db.lotes.find(l => l.id === lid); const box = document.getElementById("loteDetalhe"); box.classList.remove("hidden");
+    const itens = db.loteItens.filter(li => li.loteId === lid);
+    const disponiveis = db.pedidos.filter(p => p.status !== "Entregue" && (!p.loteId || p.loteId === lid));
+    box.innerHTML = `<div class="card" style="margin-top:12px"><div class="flex" style="justify-content:space-between"><div><h2>Lote ${escapeHtml(lote.codigo)}</h2><div class="muted">${escapeHtml(lote.tipo)} | ${Number(lote.medidaTotal).toFixed(lote.tipo === "aereo" ? 2 : 4)} ${lote.tipo === "aereo" ? "KG" : "CBM"} | ${money(lote.custoTotal)}</div></div><button class="btn orange" onclick="Lotes.ratear('${lote.id}')"><i class="fa-solid fa-scale-balanced"></i> Ratear</button></div><div class="hr"></div><div class="row"><div><label>Adicionar pedido</label><select id="addPed_${lote.id}" style="background:rgba(0,0,0,.3)">${disponiveis.map(p => { const c = db.clientes.find(x => x.id === p.clienteId); return `<option value="${p.id}">${p.codigo} - ${c?.nome || ""}</option>`; }).join("") || `<option value="">(Sem pedidos disponíveis)</option>`}</select></div><div style="display:flex;align-items:flex-end"><button class="btn" style="background:var(--success)" onclick="Lotes.addPedidoToLote('${lote.id}')"><i class="fa-solid fa-plus"></i></button></div></div><div class="hr"></div><table><thead><tr><th>Pedido</th><th>Medida</th><th style="text-align:right">Frete</th><th></th></tr></thead><tbody>${itens.map(it => { const p = db.pedidos.find(x => x.id === it.pedidoId); return `<tr><td><b style="color:#fff">${escapeHtml(p?.codigo || "-")}</b></td><td>${Number(it.medidaUsada || 0).toFixed(4)}</td><td style="text-align:right">${money(it.freteRateado || 0)}</td><td style="text-align:right"><button class="btn danger" style="padding:4px 10px;font-size:11px" onclick="Lotes.removeItem('${it.id}','${lote.id}')"><i class="fa-solid fa-xmark"></i></button></td></tr>`; }).join("") || `<tr><td colspan="4"><div class="muted" style="text-align:center;padding:20px">Sem pedidos</div></td></tr>`}</tbody></table></div>`;
+  }
+};
+
+// ========== FINANCEIRO ==========
+const Financeiro = {
+  bindCategorias() { const t = document.getElementById("f_tipo"), c = document.getElementById("f_cat"); if (!t || !c) return; const u = () => { c.innerHTML = t.value === "entrada" ? `<option value="pagamento_produto">Pagamento Produto</option><option value="pagamento_frete">Pagamento Frete</option><option value="outros">Outros</option>` : `<option value="compra_produto">Compra Produto</option><option value="frete_agencia">Frete Agência</option><option value="taxa">Taxas</option><option value="entrega_local">Entrega Local</option><option value="outros">Outros</option>`; }; t.addEventListener("change", u); u(); },
+  add() { const pid = document.getElementById("f_pedido").value || null; const tipo = document.getElementById("f_tipo").value; const cat = document.getElementById("f_cat").value; const valor = Number(document.getElementById("f_valor").value || 0); if (!(valor > 0)) return Toast.show("Valor inválido", "bad"); db.movimentos.unshift({ id: uid(), tipo, pedidoId: pid, categoria: cat, valor, metodo: document.getElementById("f_metodo").value, descricao: document.getElementById("f_desc").value.trim(), data: now() }); Storage.save(db); Toast.show("Registado", "ok"); ["f_valor", "f_desc"].forEach(id => document.getElementById(id).value = ""); App.refreshAll("financeiro"); },
+  render() { const t = document.getElementById("tblMov"); if (!db.movimentos.length) { t.innerHTML = `<tbody><tr><td colspan="5"><div class="empty-state"><div class="icon"><i class="fa-solid fa-money-bill-wave"></i></div><div class="message">Sem movimentos</div></div></td></tr></tbody>`; return; } t.innerHTML = `<thead><tr><th>Data</th><th>Tipo</th><th>Pedido</th><th>Cat.</th><th style="text-align:right">Valor</th></tr></thead><tbody>${db.movimentos.slice(0, 200).map(m => { const p = m.pedidoId ? db.pedidos.find(x => x.id === m.pedidoId) : null; return `<tr><td class="muted" style="font-size:11px">${fmtDate(m.data)}</td><td>${m.tipo === "entrada" ? '<span style="color:var(--success)"><i class="fa-solid fa-arrow-up"></i></span>' : '<span style="color:var(--danger)"><i class="fa-solid fa-arrow-down"></i></span>'}</td><td>${p ? `<b style="color:#fff">${escapeHtml(p.codigo)}</b>` : '<span class="muted">Geral</span>'}</td><td>${escapeHtml(m.categoria)}</td><td style="text-align:right;font-weight:600;color:${m.tipo === "entrada" ? "var(--success)" : "var(--danger)"}">${money(m.valor)}</td></tr>`; }).join("")}</tbody>`; }
+};
+
+// ========== WHATSAPP SERVICE ==========
+const WhatsAppService = {
+  promptNotify(pedido, newStatus) {
+    const template = WA_MESSAGES[newStatus]; if (!template) return;
+    const c = db.clientes.find(x => x.id === pedido.clienteId); if (!c) return;
+    const msg = template(c.nome, pedido.codigo);
+    document.getElementById("waPreviewMsg").textContent = msg;
+    const tel = (c.telefone || "").replace(/[^\d]/g, "");
+    const sendBtn = document.getElementById("waSendBtn");
+    sendBtn.onclick = () => {
+      if (tel) { window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, "_blank"); }
+      else { navigator.clipboard.writeText(msg); Toast.show("Texto copiado! Cole no WhatsApp.", "ok"); }
+      document.getElementById("waModal").style.display = "none";
+    };
+    document.getElementById("waModal").style.display = "grid";
+  }
+};
+
+// ========== RECIBO ==========
+const Recibo = {
+  open(pid) {
+    const p = db.pedidos.find(x => x.id === pid); const c = db.clientes.find(x => x.id === p.clienteId);
+    document.getElementById("recLogo").src = Branding.getLogo(); document.getElementById("recEmpresa").textContent = db.config.empresa;
+    document.getElementById("recContatos").textContent = `${db.config.tel} | ${db.config.email}`;
+    document.getElementById("recData").textContent = fmtDate(now()); document.getElementById("recCliente").textContent = c?.nome || "-";
+    document.getElementById("recClienteTel").textContent = c?.telefone || "-"; document.getElementById("recPedido").textContent = p.codigo; document.getElementById("recStatus").textContent = p.status;
+    document.getElementById("recLinhas").innerHTML = (p.itens || []).map(it => { const sub = it.qtd * it.precoUnit; return `<tr><td style="padding:10px;border-bottom:1px solid #eee"><b>${escapeHtml(it.desc)}</b></td><td style="text-align:center;padding:10px;border-bottom:1px solid #eee">${it.qtd}</td><td style="text-align:right;padding:10px;border-bottom:1px solid #eee">${money(it.precoUnit)}</td><td style="text-align:right;padding:10px;border-bottom:1px solid #eee;font-weight:600">${money(sub)}</td></tr>`; }).join("");
+    const total = Calc.expectedTotal(p); const pago = Calc.entradas(pid); const saldo = total - pago;
+    document.getElementById("recTotalProdutos").textContent = money(Calc.totalProdutos(p)); document.getElementById("recEnvio").textContent = money(p.envioEstimado || 0);
+    document.getElementById("recTotal").textContent = money(total); document.getElementById("recPago").textContent = money(pago); document.getElementById("recSaldo").textContent = money(saldo);
+    this._currentPedido = p; document.getElementById("reciboModal").style.display = "grid";
+  },
+  close() { document.getElementById("reciboModal").style.display = "none"; },
+  shareWA() {
+    if (!this._currentPedido) return; const p = this._currentPedido; const c = db.clientes.find(x => x.id === p.clienteId);
+    const total = Calc.expectedTotal(p); const pago = Calc.entradas(p.id); const saldo = total - pago;
+    const msg = `*RECIBO — ${db.config.empresa}*\n\nCliente: ${c?.nome || "-"}\nPedido: ${p.codigo}\n\nTotal: ${money(total)}\nPago: ${money(pago)}\n*Saldo: ${money(saldo)}*\n\nObrigado pela preferência!`;
+    const tel = (c?.telefone || "").replace(/[^\d]/g, "");
+    if (tel) { window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`, "_blank"); } else { navigator.clipboard.writeText(msg); Toast.show("Copiado!", "ok"); }
+  }
+};
+
+// ========== PUBLIC TRACKING ==========
+const PublicTracking = {
+  search() {
+    let code = (document.getElementById("track_code").value || "").trim().toUpperCase();
+    if (!code) return Toast.show("Digite o código do pedido", "bad");
+    const cleanInput = code.replace(/[^A-Z0-9]/g, '');
+    const p = db.pedidos.find(x => {
+      const cleanCod = (x.codigo || "").toUpperCase().replace(/[^A-Z0-9]/g, '');
+      return cleanCod === cleanInput;
+    });
+    const box = document.getElementById("trackResult");
+    if (!p) {
+      box.innerHTML = `<div class="card" style="margin-top:20px;text-align:center"><h2 style="color:var(--danger);justify-content:center"><i class="fa-solid fa-circle-xmark"></i> Pedido não encontrado</h2><p class="muted">Verifique o código e tente novamente.</p></div>`;
+      return;
+    }
+    const c = db.clientes.find(x => x.id === p.clienteId);
+    const statusIdx = STATUS.findIndex(s => s === p.status);
+    const histDates = {}; (p.statusHist || []).forEach(h => { const idx = STATUS.findIndex(s => s === h.status); if (idx >= 0 && !histDates[idx]) histDates[idx] = h.at; });
+    const timelineHTML = STATUS.filter(s => !s.includes("Cancelado")).map((s, i) => {
+      const isDone = i < statusIdx || (i === statusIdx && STATUS[statusIdx].includes("Entregue"));
+      const isCurrent = i === statusIdx && !STATUS[statusIdx].includes("Entregue");
+      const isPending = i > statusIdx;
+      const cls = isDone ? "done" : isCurrent ? "current" : "pending";
+      const icon = isDone ? '<i class="fa-solid fa-check"></i>' : isCurrent ? '<i class="fa-solid fa-circle"></i>' : '<i class="fa-regular fa-circle"></i>';
+      const date = histDates[i] ? fmtDate(histDates[i]) : "";
+      return `<div class="timeline-item"><div class="timeline-dot ${cls}">${icon}</div>${i < STATUS.length - 2 ? `<div class="timeline-line ${isDone || isCurrent ? 'done' : 'pending'}"></div>` : ''}<div class="timeline-content"><div class="title" style="color:${isDone ? 'var(--success)' : isCurrent ? 'var(--brand-orange)' : 'var(--muted)'}">${escapeHtml(s)}</div>${date ? `<div class="date">${date}</div>` : ''}</div></div>`;
+    }).join("");
+    box.innerHTML = `<div class="card" style="margin-top:20px"><div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:16px"><div><h2 style="margin:0;color:var(--brand-orange)">${escapeHtml(p.codigo)}</h2><div class="muted">Cliente: ${escapeHtml(c?.nome || "")}</div></div><div>${Pedidos.pill(p.status)}</div></div><div class="hr"></div><h2>Progresso do Pedido</h2><div class="timeline">${timelineHTML}</div><div class="hr"></div><div class="muted" style="text-align:center">Itens: ${(p.itens || []).length} | Total: ${money(Calc.expectedTotal(p))}</div></div>`;
+  }
+};
+
+// ========== CLIENT PORTAL ==========
+const ClientPortal = {
+  render() {
+    const cu = db.clientUsers.find(u => u.id === SessionManager.get()?.userId); if (!cu) return;
+    const c = db.clientes.find(x => x.id === cu.clienteId);
+    document.getElementById("clientWelcome").textContent = `Olá, ${c?.nome || "Cliente"}!`;
+    document.getElementById("clientPortalWelcome").textContent = `Olá, ${c?.nome || ""}!`;
+    const pedidos = db.pedidos.filter(p => p.clienteId === cu.clienteId);
+    const list = document.getElementById("clientOrdersList");
+    const detail = document.getElementById("clientOrderDetail");
+    detail.classList.add("hidden");
+    if (!pedidos.length) { list.innerHTML = `<div class="card"><div class="empty-state"><div class="icon"><i class="fa-solid fa-box-open"></i></div><div class="message" style="font-size:16px;margin-top:12px">Ainda não tem pedidos registados</div><p class="muted" style="margin-top:8px">Entre em contacto connosco para fazer o seu primeiro pedido!</p></div></div>`; return; }
+    list.innerHTML = `<div class="kpi" style="margin-bottom:24px"><div class="box"><div class="v">${pedidos.length}</div><div class="t">Total Pedidos</div></div><div class="box"><div class="v" style="color:var(--warning)">${pedidos.filter(p => p.status.toLowerCase().includes("trânsito")).length}</div><div class="t">Em Trânsito</div></div><div class="box"><div class="v" style="color:var(--success)">${pedidos.filter(p => p.status.toLowerCase().includes("entregue")).length}</div><div class="t">Entregues</div></div></div>
+    ${pedidos.map(p => { const saldo = Calc.saldo(p); const total = Calc.expectedTotal(p); return `<div class="order-card" onclick="ClientPortal.showOrder('${p.id}')"><div class="flex" style="justify-content:space-between;align-items:center"><div><div style="font-size:18px;font-weight:700;color:var(--brand-orange)">${escapeHtml(p.codigo)}</div><div class="muted" style="margin-top:4px">${(p.itens || []).length} item(ns) | ${escapeHtml(p.modalidade || "")}</div></div><div style="text-align:right">${Pedidos.pill(p.status)}<div class="muted" style="margin-top:8px">Total: ${money(total)}${saldo > 0 ? ` | <span style="color:var(--danger)">Saldo: ${money(saldo)}</span>` : ''}</div></div></div></div>`; }).join("")}`;
+  },
+  showOrder(pid) {
+    const p = db.pedidos.find(x => x.id === pid); if (!p) return;
+    const c = db.clientes.find(x => x.id === p.clienteId);
+    document.getElementById("clientOrdersList").innerHTML = "";
+    const detail = document.getElementById("clientOrderDetail"); detail.classList.remove("hidden");
+    const statusIdx = STATUS.findIndex(s => s === p.status);
+    const histDates = {}; (p.statusHist || []).forEach(h => { const idx = STATUS.findIndex(s => s === h.status); if (idx >= 0) histDates[idx] = h.at; });
+    const timelineHTML = STATUS.filter(s => !s.includes("Cancelado")).map((s, i) => {
+      const isDone = i < statusIdx || (i === statusIdx && STATUS[statusIdx].includes("Entregue"));
+      const isCurrent = i === statusIdx; const cls = isDone ? "done" : isCurrent ? "current" : "pending";
+      const icon = isDone ? '<i class="fa-solid fa-check"></i>' : isCurrent ? '<i class="fa-solid fa-circle"></i>' : '<i class="fa-regular fa-circle"></i>';
+      return `<div class="timeline-item"><div class="timeline-dot ${cls}">${icon}</div>${i < 8 ? `<div class="timeline-line ${isDone || isCurrent ? 'done' : 'pending'}"></div>` : ''}<div class="timeline-content"><div class="title" style="color:${isDone ? 'var(--success)' : isCurrent ? 'var(--brand-orange)' : 'var(--muted)'}">${escapeHtml(s)}</div>${histDates[i] ? `<div class="date">${fmtDate(histDates[i])}</div>` : ''}</div></div>`;
+    }).join("");
+
+    let trackingClienteHTML = "";
+    if (p.tracking && p.tracking.etapas) {
+      trackingClienteHTML = `<div class="hr"></div><h2>Rastreamento da Encomenda</h2><div id="trackingCliente">${TrackingManager.renderCliente(p)}</div>`;
+    }
+
+    detail.innerHTML = `<button class="btn secondary" onclick="ClientPortal.render()" style="margin-bottom:16px"><i class="fa-solid fa-arrow-left"></i> Voltar aos Pedidos</button>
+    <div class="card"><h2 style="color:var(--brand-orange)">${escapeHtml(p.codigo)}</h2><div class="muted" style="margin-bottom:20px">Status actual: ${Pedidos.pill(p.status)}</div><div class="hr"></div><h2>Progresso</h2><div class="timeline">${timelineHTML}</div>${trackingClienteHTML}<div class="hr"></div><h2>Produtos</h2>${(p.itens || []).map(it => `<div style="border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:8px;background:rgba(0,0,0,.2)"><b style="color:#fff">${escapeHtml(it.desc)}</b><div class="muted">Qtd: ${it.qtd} | ${money(it.precoUnit)}</div></div>`).join("")}<div class="hr"></div><div class="row"><div class="card" style="background:rgba(0,0,0,.2);padding:12px"><div class="muted" style="font-size:11px">TOTAL</div><div style="font-size:20px;font-weight:800;color:#fff">${money(Calc.expectedTotal(p))}</div></div><div class="card" style="background:rgba(0,0,0,.2);padding:12px"><div class="muted" style="font-size:11px">PAGO</div><div style="font-size:20px;font-weight:800;color:var(--success)">${money(Calc.entradas(p.id))}</div></div><div class="card" style="background:rgba(255,122,24,.1);padding:12px"><div class="muted" style="font-size:11px">SALDO</div><div style="font-size:20px;font-weight:800;color:${Calc.saldo(p) > 0 ? "var(--danger)" : "var(--success)"}">${money(Calc.saldo(p))}</div></div></div></div>`;
+  }
+};
+
+// ========== HISTÓRICO ==========
+const Historico = {
+  render() {
+    const container = document.getElementById("historicoList");
+    const entregues = db.pedidos.filter(p => p.status === "Entregue");
+    if (!entregues.length) {
+      container.innerHTML = `<div class="empty-state"><div class="icon"><i class="fa-solid fa-clock-rotate-left"></i></div><div class="message">Nenhum pedido entregue</div></div>`;
+      return;
+    }
+    container.innerHTML = entregues.map(p => {
+      const c = db.clientes.find(x => x.id === p.clienteId);
+      return `<div class="card" style="margin-bottom:16px">
+        <div class="flex" style="justify-content:space-between">
+          <div>
+            <b style="font-size:16px;color:#fff">${escapeHtml(p.codigo)}</b>
+            <div class="muted">Cliente: ${escapeHtml(c?.nome || "-")}</div>
+          </div>
+          <div style="text-align:right">
+            <span class="pill ok">Entregue</span>
+            <div class="muted" style="margin-top:4px">${p.dataEntrega ? fmtDate(p.dataEntrega) : "Data desconhecida"}</div>
+          </div>
+        </div>
+        <div class="muted" style="margin-top:8px">${(p.itens || []).length} produto(s) | Total: ${money(Calc.expectedTotal(p))}</div>
+      </div>`;
+    }).join("");
+  }
+};
+
+// ========== CONFIG ==========
+const Config = {
+  async save() {
+    db.config.empresa = document.getElementById("cfg_nome").value.trim() || db.config.empresa; db.config.tel = document.getElementById("cfg_tel").value.trim(); db.config.email = document.getElementById("cfg_email").value.trim(); db.config.cambio = Number(document.getElementById("cfg_cambio").value || 11.5); db.config.minPreco = Number(document.getElementById("cfg_min_preco").value || 200); db.config.pctEnvio = Number(document.getElementById("cfg_pct_envio").value || 50);
+    const np = Number(document.getElementById("cfg_next_pedido").value || 1); db.config.nextPedidoNumber = Math.max(1, Math.floor(np));
+    const file = document.getElementById("cfg_logo").files[0]; if (file) { if (file.size > 1000000) return Toast.show("Logo >1MB", "bad"); db.config.logoDataURL = await new Promise((r, j) => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.onerror = j; fr.readAsDataURL(file); }); }
+    Storage.save(db); Toast.show("Configurações guardadas!", "ok"); App.refreshAll("config");
+  },
+  render() {
+    const els = { cfg_nome: db.config.empresa, cfg_tel: db.config.tel, cfg_email: db.config.email, cfg_cambio: db.config.cambio, cfg_min_preco: db.config.minPreco, cfg_pct_envio: db.config.pctEnvio, cfg_next_pedido: db.config.nextPedidoNumber || 1 };
+    Object.entries(els).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
+    const m = document.getElementById("minPrecoTxt"), p = document.getElementById("pctEnvioTxt"), c = document.getElementById("p_cambio"), lt = document.getElementById("lastBackupTime");
+    if (m) m.textContent = `${db.config.minPreco} MZN`; if (p) p.textContent = `${db.config.pctEnvio}%`; if (c) c.value = db.config.cambio;
+    const last = Backup.lastTime(); if (lt) lt.textContent = last ? fmtDate(last) : "Nunca";
+  }
+};
+
+// ========== DASHBOARD ==========
+const Dashboard = {
+  render() {
+    const k = document.getElementById("kpis"); const tp = db.pedidos.length;
+    const pendentes = db.pedidos.filter(p => Calc.saldo(p) > 0 && !p.status.toLowerCase().includes("cancel")).length;
+    const emTransito = db.pedidos.filter(p => p.status.toLowerCase().includes("trânsito")).length;
+    const entregues = db.pedidos.filter(p => p.status.toLowerCase().includes("entregue")).length;
+    const entradas = db.movimentos.filter(m => m.tipo === "entrada").reduce((a, m) => a + Number(m.valor || 0), 0);
+    const saidas = db.movimentos.filter(m => m.tipo === "saida").reduce((a, m) => a + Number(m.valor || 0), 0);
+    const caixa = entradas - saidas;
+    k.innerHTML = `<div class="box"><div class="v">${tp}</div><div class="t"><i class="fa-solid fa-box"></i> Pedidos</div></div><div class="box"><div class="v" style="color:var(--danger)">${pendentes}</div><div class="t"><i class="fa-solid fa-clock"></i> Pendentes</div></div><div class="box"><div class="v" style="color:var(--warning)">${emTransito}</div><div class="t"><i class="fa-solid fa-truck-fast"></i> Em Trânsito</div></div><div class="box"><div class="v" style="color:var(--success)">${entregues}</div><div class="t"><i class="fa-solid fa-circle-check"></i> Entregues</div></div><div class="box"><div class="v" style="color:${caixa >= 0 ? 'var(--success)' : 'var(--danger)'}">${money(caixa)}</div><div class="t"><i class="fa-solid fa-money-bill-wave"></i> Caixa</div></div><div class="box"><div class="v" style="color:var(--brand-orange)">${money(db.pedidos.reduce((a, p) => a + Math.max(0, Calc.saldo(p)), 0))}</div><div class="t"><i class="fa-solid fa-hand-holding-dollar"></i> A Receber</div></div>`;
+    const recent = db.pedidos.slice(0, 6); const rt = document.getElementById("tblRecent");
+    rt.innerHTML = recent.length ? `<thead><tr><th>Pedido</th><th>Cliente</th><th>Saldo</th></tr></thead><tbody>${recent.map(p => { const c = db.clientes.find(x => x.id === p.clienteId); return `<tr style="cursor:pointer" onclick="Nav.goto('pedidos');Pedidos.show('${p.id}')"><td><b style="color:#fff">${escapeHtml(p.codigo)}</b></td><td>${escapeHtml(c?.nome || "-")}</td><td style="text-align:right;color:${Calc.saldo(p) > 0 ? 'var(--danger)' : 'var(--success)'}">${money(Calc.saldo(p))}</td></tr>`; }).join("")}</tbody>` : `<tbody><tr><td><div class="muted">Sem pedidos</div></td></tr></tbody>`;
+    document.getElementById("pendencias").innerHTML = db.pedidos.filter(p => Calc.saldo(p) > 0).sort((a, b) => Calc.saldo(b) - Calc.saldo(a)).slice(0, 5).map(p => { const c = db.clientes.find(x => x.id === p.clienteId); return `<li><b>${escapeHtml(p.codigo)}</b> - ${escapeHtml(c?.nome || "")}: <span style="color:var(--danger)">${money(Calc.saldo(p))}</span></li>`; }).join("") || `<li class="muted">Nenhuma</li>`;
+    document.getElementById("resumoFinanceiro").innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px"><div style="background:rgba(0,0,0,.2);padding:12px;border-radius:8px"><div class="muted" style="font-size:11px"><i class="fa-solid fa-money-bill-wave"></i> CAIXA</div><div style="font-size:24px;font-weight:800;color:${caixa >= 0 ? 'var(--success)' : 'var(--danger)'}">${money(caixa)}</div></div><div style="background:rgba(0,0,0,.2);padding:12px;border-radius:8px"><div class="muted" style="font-size:11px"><i class="fa-solid fa-box"></i> EM PEDIDOS</div><div style="font-size:24px;font-weight:800;color:#fff">${money(db.pedidos.reduce((a, p) => a + Calc.expectedTotal(p), 0))}</div></div></div>`;
+  }
+};
+
+// ========== APP ==========
+const App = {
+  exportJSON() { const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "backup-pap.json"; a.click(); URL.revokeObjectURL(url); Toast.show("Exportado", "ok"); },
+  importJSON() { const input = document.createElement("input"); input.type = "file"; input.accept = ".json"; input.onchange = async e => { const file = e.target.files[0]; if (!file) return; try { const text = await file.text(); const imported = JSON.parse(text); if (!imported.config || !imported.pedidos) return Toast.show("Arquivo inválido", "bad"); if (!confirm("Substituir TODOS os dados?")) return; const currentSession = SessionManager.get(); db = imported; db = migrateData(db); Storage.save(db); if (currentSession) { SessionManager.save(currentSession); } Toast.show("Importado! Recarregando...", "ok"); setTimeout(() => location.reload(), 1000); } catch (e) { Toast.show("Erro ao ler arquivo", "bad"); } }; input.click(); },
+  resetAll() { if (!confirm("APAGAR TUDO?")) return; SessionManager.clear(); localforage.removeItem(DBKEY).then(() => { localStorage.removeItem(BACKUP_KEY); localStorage.removeItem(BACKUP_KEY + "_ts"); location.reload(); }); },
+  updateBadges() { const b = document.getElementById("pedidosBadge"); if (!b) return; const n = db.pedidos.filter(p => Calc.saldo(p) > 0 && !p.status.toLowerCase().includes("cancel")).length; b.textContent = n; b.style.display = n > 0 ? "inline-block" : "none"; },
+  fillSelects() {
+    const cs = document.getElementById("p_cliente"); if (cs) { cs.innerHTML = db.clientes.length ? "" : "<option>(Crie um cliente)</option>"; db.clientes.forEach(c => { const o = document.createElement("option"); o.value = c.id; o.textContent = `${c.nome} (${c.telefone || "sem tel"})`; cs.appendChild(o); }); }
+    const fs = document.getElementById("f_pedido"); if (fs) { fs.innerHTML = `<option value="">(Geral)</option>`; db.pedidos.forEach(p => { const c = db.clientes.find(x => x.id === p.clienteId); const o = document.createElement("option"); o.value = p.id; o.textContent = `${p.codigo} - ${c?.nome || ""} (${money(Calc.saldo(p))})`; fs.appendChild(o); }); }
+    const st = document.getElementById("p_status"), sf = document.getElementById("p_filter_status");
+    if (st) st.innerHTML = STATUS.map(s => `<option>${s}</option>`).join("");
+    if (sf) sf.innerHTML = `<option value="">Todos</option>` + STATUS.map(s => `<option value="${s}">${s}</option>`).join("");
+  },
+  showLogin() {
+    document.getElementById("view-login").classList.remove("hidden");
+    document.getElementById("appHeader").classList.add("hidden");
+    document.getElementById("clientHeader").classList.add("hidden");
+    ADMIN_VIEWS.forEach(v => { const el = document.getElementById("view-" + v); if (el) el.classList.add("hidden"); });
+    document.getElementById("view-client-portal").classList.add("hidden");
+    document.getElementById("sidebar").classList.add("collapsed");
+    Branding.apply();
+  },
+  showAdmin() {
+    document.getElementById("view-login").classList.add("hidden");
+    document.getElementById("appHeader").classList.remove("hidden");
+    document.getElementById("clientHeader").classList.add("hidden");
+    document.getElementById("view-client-portal").classList.add("hidden");
+    Nav.buildAdminNav();
+    const firstView = ROLES[Auth.role()]?.views?.[0] || "dashboard";
+    ADMIN_VIEWS.forEach(v => { const el = document.getElementById("view-" + v); if (el) el.classList.toggle("hidden", v !== firstView); });
+    this.refreshAll(firstView);
+  },
+  showClient() {
+    document.getElementById("view-login").classList.add("hidden");
+    document.getElementById("appHeader").classList.add("hidden");
+    document.getElementById("clientHeader").classList.remove("hidden");
+    ADMIN_VIEWS.forEach(v => { const el = document.getElementById("view-" + v); if (el) el.classList.add("hidden"); });
+    document.getElementById("view-client-portal").classList.remove("hidden");
+    Branding.apply(); document.getElementById("clientLogo").src = Branding.getLogo();
+    ClientPortal.render();
+  },
+  refreshAll(view) {
+    db = Storage.load ? db : db;
+    if (!Auth.require()) return;
+    Branding.apply(); Config.render(); this.fillSelects(); this.updateBadges();
+    switch (view) {
+      case "dashboard": Dashboard.render(); break; case "clientes": Clientes.render(); break;
+      case "pedidos": Pedidos.renderList(); PedidosUI.renderDraft(); PedidosUI.onModalidadeChange(); break;
+      case "armazem": Warehouse.render(true); break; case "lotes": Lotes.render(); LotesUI.onTipoChange(); break;
+      case "financeiro": Financeiro.render(); break; case "auditoria": Auditoria.render(); break;
+      case "usuarios": Users.render(); break; case "config": break; case "historico": Historico.render(); break;
+    }
+  }
+};
+
+// ========== MENU TOGGLE ==========
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebar = document.getElementById("sidebar");
+  const toggle = document.getElementById("menuToggle");
+  if (sidebar && toggle) {
+    toggle.addEventListener("click", () => sidebar.classList.toggle("collapsed"));
+  }
+});
+
+// Polyfill findLastIndex
+if (!Array.prototype.findLastIndex) {
+  Array.prototype.findLastIndex = function(predicate) {
+    for (let i = this.length - 1; i >= 0; i--) {
+      if (predicate(this[i], i, this)) return i;
+    }
+    return -1;
+  };
+}
+
+// ========== INICIALIZAÇÃO ASSÍNCRONA ==========
+async function initApp() {
+  db = await Storage.load();
+  db = migrateData(db);
+  Storage.save(db);
+
+  if (Auth.require()) {
+    if (Auth.isAdmin()) App.showAdmin();
+    else if (Auth.isClient()) App.showClient();
+  } else {
+    App.showLogin();
+  }
+
+  Pedidos.bind();
+  PedidosUI.onModalidadeChange();
+  LotesUI.onTipoChange();
+  Financeiro.bindCategorias();
+  Backup.start();
+
+  document.getElementById("admin_pass").addEventListener("keydown", e => { if (e.key === "Enter") Auth.loginAdmin(); });
+  document.getElementById("client_pass").addEventListener("keydown", e => { if (e.key === "Enter") Auth.loginClient(); });
+  document.getElementById("track_code").addEventListener("keydown", e => { if (e.key === "Enter") PublicTracking.search(); });
+}
+
+document.addEventListener("DOMContentLoaded", initApp);
+</script>
+</body>
+</html>
